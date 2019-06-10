@@ -26,9 +26,8 @@ public class iRateTables {
 	static String [] triggers = {
 		"trigger_writtenBy","trigger_Publisher","trigger_Journal"
 	};
-	static String [] relationTables = {"WrittenBy"};
-	static String [] dbTables= {"Author", "Article", "Journal", "Publisher"};
-	
+	static String [] relationTables = {"Endorsement","review","Attendance"};
+	static String [] dbTables= {"Customer", "Movie","Endorsement"};
 	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
 	public static void main(String[] args) {
 	    // the default framework is embedded
@@ -52,17 +51,19 @@ public class iRateTables {
             
 			
 			//clear database
-	        dropTriggers(stmt);
+	        //dropTriggers(stmt);
+	        dropTables(stmt, relationTables);
+			dropTables(stmt, dbTables);
 			dropTables(stmt, relationTables);
 			dropTables(stmt, dbTables);
-			dropFunctions(stmt);
 			
 			
 			//build database
-			store_utilityFunctions(stmt);
-			store_booleanFunctions(stmt);
+			
+			//store_utilityFunctions(stmt);
+			//store_booleanFunctions(stmt);
 			createTables(stmt,dbTables);
-			createTriggers(stmt);
+			//createTriggers(stmt);
 		
 	        
 		} catch (SQLException e) {
@@ -218,74 +219,83 @@ public class iRateTables {
      */
     public static void createTables(Statement stmt, String [] dbTables) {
     	try {
-    		// create the Publisher table
-            String createTable_Publisher =
-            		  "create table Publisher ("
+    		
+    		
+    	//The information is entered by the theater when the customer registers.
+    	//If a customer is deleted, all of his or her reviews and endorsements are deleted
+           String createTable_Customer =
+            		  "create table Customer ("
             		+ "  Name varchar(32) not null,"
-            		+ "  City varchar(16) not null,"
-            		+ "  primary key (Name)"
+            		+ "  Email varchar(64) not null,"
+            		+ "  CustomerID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
+            		+ "  joinedDate timestamp not null,"
+            		+ "  primary key (CustomerID)"
             		+ ")";
-            stmt.executeUpdate(createTable_Publisher);
-       
-            
-            // create the Journal table
-            // note approximate checks since ISSN is 32-bit unsigned: 
-            //    ISSN between 0x00000001 and 0x7999999a as positive range
-            //    ISSN between 0x80000000 and 0x9999999a as negative range
-            String createTable_Journal =
-            		  "create table Journal ("
-            		+ "  Title varchar(32) not null,"
-            		+ "  ISSN int not null,"
-            		+ "  PublishedBy varchar(32) not null,"
-            		+ "  primary key (ISSN),"
-            		+ "  foreign key (PublishedBy) references Publisher (Name) on delete cascade,"
-            		+ "	 check(isIssn(ISSN)),"
-            		+ "  check ((ISSN between " + 0x00000001 + " and " + 0x7999999A + ")"  // positive range
-            	    + "         or (ISSN between " + 0x9999999A + " and " + 0x80000000 + "))" // negative range
-            		+ ")";
-            stmt.executeUpdate(createTable_Journal);
-            
-            
-            // create the Article table
-            // note approximate check: 
-            //    DOIs begin with '10.'
-            String createTable_Article =
-            		  "create table Article("
-            		+ "  Title varchar(32) not null,"
-            		+ "  DOI varchar(64) not null,"
-            		+ "  PublishedIn int not null,"
-            		+ "  primary key (DOI),"
-            		+ "  foreign key (PublishedIn) references Journal (ISSN) on delete cascade,"
-            		+ "  check (isDOI(DOI)),"
-            		+ "  check (DOI like '10.%')"
-            		+ ")";
-            stmt.executeUpdate(createTable_Article);
+            stmt.executeUpdate(createTable_Customer);
+            System.out.println("Customer Table Created");
            
+            //This information is entered by t he theater for each movie it plays.
+           String createTable_Movie =
+          		  "create table Movie ("
+          		+ "  Title varchar(32) not null,"
+          		+ "  movieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
+          		+ "  primary key (movieid)"
+          		+ ")";
+          stmt.executeUpdate(createTable_Movie);
+          System.out.println("Movie Table Created");
+          
+          //If a movie is deleted, all of its attendances are deleted.
+          //Attendance info is used to verify attendance when creating a review.
+          String createTable_Attendance =
+          		  "create table Attendance ("
+          		+ "  movie_id int not null,"
+          		+ "  customer_id int not null,"
+          		+ "  primary key (movie_id,customer_id),"
+          		+ "  foreign key (movie_id) references movie (movieID) on delete cascade,"
+          		+ "  foreign key (customer_id) references customer (customerID) on delete cascade,"
+          		+ "  attendanceDATE timestamp not null"
+          		+ ")";
+          stmt.executeUpdate(createTable_Attendance);
+          System.out.println("Attendance Table Created");
+          
+          //There can only be one movie review per customer, 
+          //and the date of the review must be within 7 days of the most recent attendance of the movie.
+          //If a movie is deleted, all of its reviews are also delete
+          String createTable_review =
+          		  "create table review ("
+          		+ "  movie_id int not null,"
+          		+ "  customer_id int not null,"
+          		+ "  rating int not null,"
+          		+ "  review varchar(1000) not null,"
+          		+ "  reviewid int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
+          		+ "  primary key (reviewid),"
+          		+ "  check(rating between 1 and 5),"
+          		+ "  foreign key (movie_id) references movie(movieID) on delete cascade,"
+          		+ "  foreign key (customer_id) references customer(customerID) on delete cascade,"
+          		+ "  reviewdate timestamp not null"
+          		+ "  )";
+          stmt.executeUpdate(createTable_review);
+          System.out.println("review Table Created");
+          
+          
+          //A customer's current endorsement of a review for a movie must be at least one day after the customer's endorsement of a review for the same movie. 
+          //The endorsement includes the review ID, the customerID of the endorser, 
+          //and the endoresemnt date. A customer cannot endorse his or her own review.
+          //If a review is deleted, all endorsements are also deleted.
+          String createTable_Endorsement =
+          		  "create table Endorsement ("
+        		+ " review_id int,"
+          		+ " customer_id int,"
+        		+ " endorsementdate timestamp,"
+          		+ " primary key (review_id , customer_id),"
+        		+ " foreign key (review_id) references review (reviewid) on delete cascade,"
+          		+ " foreign key (customer_id) references customer (customerid) on delete cascade"
+          		+ " )";
+          stmt.executeUpdate(createTable_Endorsement);
+          System.out.println("Endorsement Table Created");
+          
+          
             
-            // create the Author entity table
-            // note check
-            //    ORCID between 0000000000000001 and 9999999999999999
-            String createTable_Author =
-            		  "create table Author("
-            		+ "  FamilyName varchar(16) not null,"
-            		+ "  GivenName varchar(16) not null,"
-            		+ "  ORCID bigint not null,"
-            		+ "  primary key (ORCID),"
-            		+ "  check (isORCID(ORCID)),"
-            		+ "  check (ORCID between 0000000000000001 and 9999999999999999)"
-            		+ ")";
-            stmt.executeUpdate(createTable_Author);
-
-            // create the WrittenBy relation table
-            String createTable_WrittenBy =
-	        		  "create table WrittenBy("
-	        		+ "  ArticleDOI varchar(64),"
-	        		+ "  AuthorORCID bigint,"
-	        		+ "  primary key (ArticleDOI, AuthorORCID),"
-            		+ "  foreign key (ArticleDOI) references Article (DOI) on delete cascade,"
-            		+ "  foreign key (AuthorORCID) references Author (ORCID) on delete cascade"
-	        		+ ")";
-            stmt.executeUpdate(createTable_WrittenBy);
             
             
     	}
