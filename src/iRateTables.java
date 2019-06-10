@@ -26,12 +26,12 @@ public class iRateTables {
 	static String [] triggers = {
 		"trigger_writtenBy","trigger_Publisher","trigger_Journal"
 	};
-	static String [] relationTables = {"Endorsement","review","Attendance"};
-	static String [] dbTables= {"Customer", "Movie","Endorsement"};
+	static String [] dependentTables = {"Endorsement","review","Attendance"};
+	static String [] independentTables= {"Customer", "Movie","Endorsement"};
 	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
 	public static void main(String[] args) {
 	    // the default framework is embedded
-	    String protocol = "jdbc:derby:";
+		String protocol = "jdbc:derby:";
 	    String dbName = "publication";
 		String connStr = protocol + dbName+ ";create=true";
 		
@@ -42,6 +42,7 @@ public class iRateTables {
         props.put("password", "user1");
 
 		try (
+			
 	        // connect to the database using URL
 			Connection conn = DriverManager.getConnection(connStr, props);
 	        // statement is channel for sending commands thru connection 
@@ -52,17 +53,15 @@ public class iRateTables {
 			
 			//clear database
 	        //dropTriggers(stmt);
-	        dropTables(stmt, relationTables);
-			dropTables(stmt, dbTables);
-			dropTables(stmt, relationTables);
-			dropTables(stmt, dbTables);
+	        dropTables(stmt, dependentTables);
+			dropTables(stmt, independentTables);
 			
 			
 			//build database
 			
 			//store_utilityFunctions(stmt);
 			//store_booleanFunctions(stmt);
-			createTables(stmt,dbTables);
+			createTables(stmt);
 			//createTriggers(stmt);
 		
 	        
@@ -85,34 +84,6 @@ public class iRateTables {
 				+ " EXTERNAL NAME "
 				+ "'Biblio.parseIssn'";
 			stmt.executeUpdate(parseISSN);
-			
-			String issnToString=
-				"CREATE FUNCTION issnToString(ISSN Int)"
-				+ " RETURNS VARCHAR(64) "
-				+ " PARAMETER STYLE JAVA "
-				+ " LANGUAGE JAVA "
-				+ " EXTERNAL NAME "
-				+ "'Biblio.issnToString'";
-			stmt.executeUpdate(issnToString);
-			
-			String parseOrcid=
-					"CREATE FUNCTION parseOrcid(ORCID VARCHAR(100))"
-					+ " RETURNS bigint "
-					+ " PARAMETER STYLE JAVA "
-					+ " LANGUAGE JAVA "
-					+ " EXTERNAL NAME "
-					+ "'Biblio.parseOrcid'";
-			stmt.executeUpdate(parseOrcid);
-			
-			String orcidToString=
-					"CREATE FUNCTION orcidToString(ORCID bigint)"
-					+ " RETURNS VARCHAR(64) "
-					+ " PARAMETER STYLE JAVA "
-					+ " LANGUAGE JAVA "
-					+ " EXTERNAL NAME "
-					+ "'Biblio.orcidToString'";
-			stmt.executeUpdate(orcidToString);
-			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -134,29 +105,7 @@ public class iRateTables {
 				+ " DETERMINISTIC "
 				+ " EXTERNAL NAME "
 				+ "'Biblio.isIssn'";
-		stmt.executeUpdate(isISSN);
-
-		String isDoi =
-				"CREATE FUNCTION isDoi(DOI varchar(64))"
-				+ " RETURNS BOOLEAN "
-				+ " PARAMETER STYLE JAVA "
-				+ " LANGUAGE JAVA "
-				+ " EXTERNAL NAME "
-				+ "'Biblio.isDoi'";
-		stmt.executeUpdate(isDoi);
-		
-		String isOrcid =
-				"CREATE FUNCTION isORCID(ORCID bigint)"
-				+ " RETURNS BOOLEAN "
-				+ " PARAMETER STYLE JAVA "
-				+ " LANGUAGE JAVA "
-				+ " EXTERNAL NAME "
-				+ "'Biblio.isOrcid'";
-		stmt.executeUpdate(isOrcid);
-		
-		System.out.println("All Boolean Functions Created");
-		
-		
+		stmt.executeUpdate(isISSN);	
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.err.println("Not all function created");
@@ -217,7 +166,7 @@ public class iRateTables {
      * create tables
      * @param stmt
      */
-    public static void createTables(Statement stmt, String [] dbTables) {
+    public static void createTables(Statement stmt) {
     	try {
     		
     		
@@ -225,9 +174,9 @@ public class iRateTables {
     	//If a customer is deleted, all of his or her reviews and endorsements are deleted
            String createTable_Customer =
             		  "create table Customer ("
+            		+ "  CustomerID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 5),"
             		+ "  Name varchar(32) not null,"
             		+ "  Email varchar(64) not null,"
-            		+ "  CustomerID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
             		+ "  joinedDate timestamp not null,"
             		+ "  primary key (CustomerID)"
             		+ ")";
@@ -267,7 +216,7 @@ public class iRateTables {
           		+ "  customer_id int not null,"
           		+ "  rating int not null,"
           		+ "  review varchar(1000) not null,"
-          		+ "  reviewid int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
+          		+ "  reviewid int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
           		+ "  primary key (reviewid),"
           		+ "  check(rating between 1 and 5),"
           		+ "  foreign key (movie_id) references movie(movieID) on delete cascade,"
@@ -294,10 +243,7 @@ public class iRateTables {
           stmt.executeUpdate(createTable_Endorsement);
           System.out.println("Endorsement Table Created");
           
-          
-            
-            
-            
+
     	}
     	catch(SQLException e) {
     		//if table already existed, re-run dropTables
@@ -324,19 +270,7 @@ public class iRateTables {
         			+ " Delete From Author where ORCID Not In"
         			+ " (Select authorORCID From WrittenBy) ";
 			stmt.execute(create_trigger_writtenBy);
-			
-			//trigger for Journal, Article updated from Cascade
-        	String create_trigger_Journal = 
-        			"create Trigger trigger_Journal"
-        			+ " After Delete On Article "
-        			+ " For Each Statement"
-        			+ " Delete From Journal where ISSN Not In"
-        			+ " (Select PublishedIn From Article) ";
-			stmt.execute(create_trigger_Journal);
-			
-			System.out.println("All Triggers Are Created");
-			
-			
+		
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

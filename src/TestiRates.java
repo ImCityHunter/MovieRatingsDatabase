@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
@@ -25,10 +27,8 @@ import java.util.Properties;
  * @author philip gust
  */
 public class TestiRates {
-	static String dbTables[] = {
-			"WrittenBy",		// relations
-			"Author", "Article", "Journal", "Publisher"		// entities
-	    };
+	static String [] dependentTables = {"Endorsement","review","Attendance"};
+	static String [] independentTables= {"Customer", "Movie","Endorsement"};
 	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
 	public static void main(String[] args) {
 	    // the default framework is embedded
@@ -53,43 +53,12 @@ public class TestiRates {
 			Connection  conn = DriverManager.getConnection(connStr, props);
 			Statement stmt = conn.createStatement();
 			
-			//call to test if all functions are stored in the database properly
-			testStoredFunctions(conn,stmt,rs);
-			testStoredFunctions_invalid(conn,stmt,rs);
+			
 			
 			//call to store data into database
-			refreshData(conn, stmt, rs);
+			setDefaultData.defaultData(conn,stmt,rs);
+			printTable(stmt,"customer",rs);
 			
-
-			// delete article
-			System.out.println("\nDeleting article 10.1145/2838730 from CACM with 3 authors");
-			stmt.execute("delete from Article where doi = '10.1145/2838730'");
-			PubUtil.printArticles(conn);
-			PubUtil.printAuthors(conn);
-
-			// delete publisher ACM
-			System.out.println("\nDeleting publisher ACM");
-			stmt.executeUpdate("delete from Publisher where name = 'ACM'");
-			PubUtil.printPublishers(conn);
-			PubUtil.printJournals(conn);
-			PubUtil.printArticles(conn);
-			PubUtil.printAuthors(conn);
-			
-			// delete journal Spectrum (0018-9235)
-			System.out.println("\nDeleting journal Spectrum from IEEE");
-			stmt.executeUpdate("delete from Journal where issn = " + Biblio.parseIssn("0018-9235"));
-			PubUtil.printJournals(conn);
-			PubUtil.printArticles(conn);
-			PubUtil.printAuthors(conn);
-			
-			
-			// delete journal Computer
-			System.out.println("\nDeleting journal Computer from IEEE");
-			stmt.executeUpdate("delete from Journal where title = 'Computer'");
-			PubUtil.printPublishers(conn);
-			PubUtil.printJournals(conn);
-			PubUtil.printArticles(conn);
-			PubUtil.printAuthors(conn);
 		
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -121,21 +90,6 @@ public class TestiRates {
 				System.err.printf("Function: %s has an invalid input: %s\n",function, invalidInt);
 			}
 		}
-		for(String function: functions) {
-			try {
-				PreparedStatement invoke = conn.prepareStatement("values("+function+"(?))");
-				invoke.setString(1,invalidValue);
-				rs = invoke.executeQuery();
-				if(rs.next()) {
-					String result = rs.getString(1);
-					System.out.printf("Function: %s. Input: %s. Result: %s\n",function, invalidValue, result);
-				}
-			}
-			catch(SQLException e) {
-				System.err.printf("Function: %s has an invalid input: %s\n",function, invalidValue);
-			}
-		}
-		
 
 
 	}
@@ -252,150 +206,39 @@ public class TestiRates {
 	}
 	
 	
-	/**
-	 * Refreshs Data from Files
-	 * @param conn
-	 * @param stmt
-	 */
-	public static void refreshData(Connection  conn, Statement stmt, ResultSet rs) {
-
-		// name of data file
-		String fileName = "pubdata.txt";
-
-		try (
-				// open data file
-				BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
-				
-				// insert prepared statements
-				PreparedStatement insertRow_Publisher = conn.prepareStatement(
-						"insert into Publisher values(?, ?)");
-				PreparedStatement insertRow_Journal = conn.prepareStatement(
-						"insert into Journal values(?, parseISSN(?), ?)");
-				PreparedStatement insertRow_Article = conn.prepareStatement(
-						"insert into Article values(?, ?, parseISSN(?))");
-				PreparedStatement insertRow_Author = conn.prepareStatement(
-						"insert into Author values(?, ?, parseORCID(?))");
-				PreparedStatement insertRow_WrittenBy = conn.prepareStatement(
-						"insert into WrittenBy values(?, parseORCID(?))");
-			) {
-	            
-	            // clear data from tables
-	            for (String tbl : dbTables) {
-		            try {
-		            	stmt.executeUpdate("delete from " + tbl);
-		            	//System.out.println("Truncated table " + tbl);
-		            } catch (SQLException ex) {
-		            	System.out.println("Did not truncate table " + tbl);
-		            }
-	            }
-	            
-	            System.out.println("\nAll Data are Dropped");
-	            
-				String line;
-				while ((line = br.readLine()) != null) {
-					// split input line into fields at tab delimiter
-					String[] data = line.split("\t");
-					if (data.length != 9) continue;
-				
-					// get fields from input data
-					String publisherName = data[0];
-					String publisherCity = data[1];
-					
-					// add Publisher if does not exist
-					try {
-						insertRow_Publisher.setString(1, publisherName);
-						insertRow_Publisher.setString(2, publisherCity);
-						insertRow_Publisher.execute();
-					} catch (SQLException ex) {
-						// already exists
-						// System.err.printf("Already inserted Publisher %s City %s\n", publisherName, publisherCity);
-					}
-					
-					
-					
-					// get fields from input data
-					String journalTitle = data[2];
-					String journalIssn = data[3]; // no ISSN
-					
-					
-					// add Journal if does not exist
-					try {
-
-						insertRow_Journal.setString(1, journalTitle);
-						insertRow_Journal.setString(2, journalIssn);
-						insertRow_Journal.setString(3, publisherName);
-						insertRow_Journal.execute();
-					} catch (SQLException ex) {
-						// already exists
-						// System.err.printf("Already inserted Journal %s Issn %s Publisher %s\n", 
-						//		journalTitle, Biblio.issnToString(journalIssn), publisherName);
-					} catch (NumberFormatException ex) {
-						System.err.printf("Unable to insert Journal %s invalid Issn %s\n", journalTitle, data[3]);
-						continue;
-					}
-
-					// add Article if does not exist
-					String articleTitle = data[4];
-					String articleDOI = data[5];
-					if (!Biblio.isDoi(articleDOI)) {
-						System.err.printf("Unable to insert Article \"%s\" invalid DOI %s\n", articleTitle, articleDOI);
-						continue;
-					}
-					try {
-						insertRow_Article.setString(1, articleTitle);
-						insertRow_Article.setString(2, articleDOI);
-						insertRow_Article.setString(3, journalIssn);
-						insertRow_Article.execute();
-					} catch (SQLException ex) {
-						// already exists
-						// System.err.printf("Already inserted Article %s DOI %s, Issn %s\n", 
-						//		articleTitle, articleDOI, Biblio.issnToString(journalIssn));
-					}
-
-					// add Author if does not exist
-					String authorFamilyName = data[6];
-					String authorGivenName = data[7];
-					String authorORCID = data[8];
-					try {
-						insertRow_Author.setString(1, authorFamilyName);
-						insertRow_Author.setString(2, authorGivenName);
-						insertRow_Author.setString(3, authorORCID);
-						insertRow_Author.execute();
-					} catch (SQLException ex) {
-						// already exists
-						// System.err.printf("Already inserted Author %s, %s ORCID %016d\n", 
-						//		 authorFamilyName, authorGivenName, authorORCID);
-					} catch (NumberFormatException ex) {
-						 System.err.printf("Unable to insert Author %s, %s invalid ORCID %s\n", 
-								 authorFamilyName, authorGivenName, data[8]);
-						continue;
-					}
-
-					// add WrittenBy if does not exist
-					try {
-						insertRow_WrittenBy.setString(1, articleDOI);
-						insertRow_WrittenBy.setString(2, authorORCID);
-						insertRow_WrittenBy.execute();
-					} catch (SQLException ex) {
-						// already exists
-						//System.err.printf("Already inserted WrittenBy %64s ORCID %d\n", articleDOI, authorORCID);
-					}
-				}
-				
-				System.out.println("Refresh Data: ");
-				// print number of rows in tables
-				for (String tbl : dbTables) {
-					rs = stmt.executeQuery("select count(*) from " + tbl);
-					if (rs.next()) {
-						int count = rs.getInt(1);
-						System.out.printf("Table %s : count: %d\n", tbl, count);
-					}
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+	public static void printTable(Statement stmt, String table, ResultSet rs) {
+		try {
+			rs = stmt.executeQuery("SELECT * From "+table);
+			ResultSetMetaData rsmd = rs.getMetaData();
+			String eventFormat = "";
+			int numberOfColumns = rsmd.getColumnCount();
+			String [] row = new String [numberOfColumns];
+	        
+			for(int i=0;i<numberOfColumns;i++) {
+	        	eventFormat+="%-20s";
+	        }
+			eventFormat+="\n";
+	        
+		    for (int i = 1; i <= numberOfColumns; i++) {
+		         String columnName = rsmd.getColumnName(i);
+		         row[i-1] = columnName;
+		     }
+		     System.out.format(eventFormat,row);
+		     while (rs.next()) {
+		        for (int i = 1; i <= numberOfColumns; i++) {
+		         
+		            String columnValue = rs.getString(i);
+		            row [i-1] = columnValue;
+		          } 
+		        }
+		     System.out.format(eventFormat, row);
+		      
+		   
+			rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+	}
+
 }

@@ -1,6 +1,6 @@
 ----------------------------------------------------------------
-Mon Jun 10 13:21:03 PDT 2019:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-016b-430d-24be-00000f708b00 
+Mon Jun 10 16:38:17 PDT 2019:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-016b-43c1-b8e0-00000f7096e8 
 on database directory /Users/hky/Desktop/CS5200/MovieRatingsDatabase/publication with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@799f7e29 
 Loaded from file:/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derby.jar
 java.vendor=Oracle Corporation
