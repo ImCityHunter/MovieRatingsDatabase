@@ -1,2 +1,2 @@
-# MovieRatingsDatabase
-CS 5200
+# assignment-3
+Starter code for assignment 3
