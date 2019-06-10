@@ -177,7 +177,7 @@ public class iRateTables {
             		+ "  CustomerID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 5),"
             		+ "  Name varchar(32) not null,"
             		+ "  Email varchar(64) not null,"
-            		+ "  joinedDate timestamp not null,"
+            		+ "  joinedDate date not null,"
             		+ "  primary key (CustomerID)"
             		+ ")";
             stmt.executeUpdate(createTable_Customer);
@@ -202,7 +202,7 @@ public class iRateTables {
           		+ "  primary key (movie_id,customer_id),"
           		+ "  foreign key (movie_id) references movie (movieID) on delete cascade,"
           		+ "  foreign key (customer_id) references customer (customerID) on delete cascade,"
-          		+ "  attendanceDATE timestamp not null"
+          		+ "  attendanceDATE date not null"
           		+ ")";
           stmt.executeUpdate(createTable_Attendance);
           System.out.println("Attendance Table Created");
@@ -221,7 +221,7 @@ public class iRateTables {
           		+ "  check(rating between 1 and 5),"
           		+ "  foreign key (movie_id) references movie(movieID) on delete cascade,"
           		+ "  foreign key (customer_id) references customer(customerID) on delete cascade,"
-          		+ "  reviewdate timestamp not null"
+          		+ "  reviewdate date not null"
           		+ "  )";
           stmt.executeUpdate(createTable_review);
           System.out.println("review Table Created");

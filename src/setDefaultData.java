@@ -45,7 +45,7 @@ public class setDefaultData {
 	            Date CreateDate = new Date(System.currentTimeMillis());
 	            insertRow_Customer.setString(1, "Luke");
 	            insertRow_Customer.setString(2, "Luke@gmail.com");
-	            insertRow_Customer.setTimestamp(3, new java.sql.Timestamp(CreateDate.getTime()));
+	            insertRow_Customer.setDate(3, CreateDate);
 	            insertRow_Customer.execute();
 				System.out.println("Refresh Data: ");
 				// print number of rows in tables
