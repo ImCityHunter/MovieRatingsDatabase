@@ -186,7 +186,7 @@ public class iRateTables {
           		  "create table Movie ("
           		+ "  Title varchar(32) not null,"
           		+ "  MovieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
-          		+ "  primary key (MoivieID)"
+          		+ "  primary key (MovieID)"
           		+ ")";
           stmt.executeUpdate(createTable_Movie);
           System.out.println("Movie Table Created");
@@ -199,8 +199,8 @@ public class iRateTables {
           		+ "  CustomerID int not null,"
           		+ "  AttendanceDATE date not null,"
           		+ "  primary key (MovieID, CustomerID, AttendanceDATE),"
-          		+ "  foreign key (MovieID) references movie(MovieID) on delete cascade,"
-          		+ "  foreign key (CustomerID) references customer(CustomerID) on delete cascade"
+          		+ "  foreign key (MovieID) references Movie(MovieID) on delete cascade,"
+          		+ "  foreign key (CustomerID) references Customer(CustomerID) on delete cascade"
           		+ ")";
           stmt.executeUpdate(createTable_Attendance);
           System.out.println("Attendance Table Created");
@@ -220,7 +220,7 @@ public class iRateTables {
           		+ "  primary key (ReviewID),"
           		+ "  check(Rating between 0 and 5),"
           		+ "  constraint foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade,"
-          		+ "  check(ReviewCount < 1)"
+          		+ "  check(ReviewCount < 1),"
           		+ "  check(datediff(day, ReviewDate, select AttendanceDATE from Review, Attendance"
           		+ " where(Review.MovieID = Attendance.MovieID and Review.CustomerID = Attendance.CustomerID)) < 7)"
           		+ "  )";
