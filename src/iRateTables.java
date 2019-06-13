@@ -1,5 +1,4 @@
 
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -169,76 +168,79 @@ public class iRateTables {
     public static void createTables(Statement stmt) {
     	try {
     		
-    		
-    	//The information is entered by the theater when the customer registers.
-    	//If a customer is deleted, all of his or her reviews and endorsements are deleted
+    		//The information is entered by the theater when the customer registers.
+    	    //If a customer is deleted, all of his or her reviews and endorsements are deleted
            String createTable_Customer =
             		  "create table Customer ("
             		+ "  CustomerID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 5),"
             		+ "  Name varchar(32) not null,"
             		+ "  Email varchar(64) not null,"
-            		+ "  joinedDate date not null,"
+            		+ "  JoinedDate date not null,"
             		+ "  primary key (CustomerID)"
             		+ ")";
             stmt.executeUpdate(createTable_Customer);
             System.out.println("Customer Table Created");
            
-            //This information is entered by t he theater for each movie it plays.
+            //This information is entered by the theater for each movie it plays.
            String createTable_Movie =
           		  "create table Movie ("
           		+ "  Title varchar(32) not null,"
-          		+ "  movieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
-          		+ "  primary key (movieid)"
+          		+ "  MovieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
+          		+ "  primary key (MoivieID)"
           		+ ")";
           stmt.executeUpdate(createTable_Movie);
           System.out.println("Movie Table Created");
           
-          //If a movie is deleted, all of its attendances are deleted.
-          //Attendance info is used to verify attendance when creating a review.
+          //This info is a record of a movie seen by a customer on a given date.
+          //If a movie is deleted, all of its attendances are deleted. Attendance info is used to verify attendance when creating a review.
           String createTable_Attendance =
           		  "create table Attendance ("
-          		+ "  movie_id int not null,"
-          		+ "  customer_id int not null,"
-          		+ "  primary key (movie_id,customer_id),"
-          		+ "  foreign key (movie_id) references movie (movieID) on delete cascade,"
-          		+ "  foreign key (customer_id) references customer (customerID) on delete cascade,"
-          		+ "  attendanceDATE date not null"
+          		+ "  MovieID int not null,"
+          		+ "  CustomerID int not null,"
+          		+ "  AttendanceDATE date not null,"
+          		+ "  primary key (MovieID, CustomerID, AttendanceDATE),"
+          		+ "  foreign key (MovieID) references movie(MovieID) on delete cascade,"
+          		+ "  foreign key (CustomerID) references customer(CustomerID) on delete cascade"
           		+ ")";
           stmt.executeUpdate(createTable_Attendance);
           System.out.println("Attendance Table Created");
           
-          //There can only be one movie review per customer, 
-          //and the date of the review must be within 7 days of the most recent attendance of the movie.
+          //This is a review of a particular movie attended by a customer within the last week.
+          //There can only be one movie review per customer, and the date of the review must be within 7 days of the most recent attendance of the movie.
           //If a movie is deleted, all of its reviews are also delete
-          String createTable_review =
-          		  "create table review ("
-          		+ "  movie_id int not null,"
-          		+ "  customer_id int not null,"
-          		+ "  rating int not null,"
-          		+ "  review varchar(1000) not null,"
-          		+ "  reviewid int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
-          		+ "  primary key (reviewid),"
-          		+ "  check(rating between 1 and 5),"
-          		+ "  foreign key (movie_id) references movie(movieID) on delete cascade,"
-          		+ "  foreign key (customer_id) references customer(customerID) on delete cascade,"
-          		+ "  reviewdate date not null"
+          String createTable_Review =
+          		  "create table Review ("
+          		+ "  MovieID int not null,"
+          		+ "  CustomerID int not null,"
+          		+ "  Rating int not null,"
+          		+ "  ReviewDate date not null,"
+          		+ "  Review varchar(1000) not null,"
+          		+ "  ReviewID int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
+          		+ "  ReviewCount int default 0,"
+          		+ "  primary key (ReviewID),"
+          		+ "  check(Rating between 0 and 5),"
+          		+ "  constraint foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade,"
+          		+ "  check(ReviewCount < 1)"
+          		+ "  check(datediff(day, ReviewDate, select AttendanceDATE from Review, Attendance"
+          		+ " where(Review.MovieID = Attendance.MovieID and Review.CustomerID = Attendance.CustomerID)) < 7)"
           		+ "  )";
-          stmt.executeUpdate(createTable_review);
-          System.out.println("review Table Created");
+          stmt.executeUpdate(createTable_Review);
+          System.out.println("Review Table Created");
           
-          
+          //This is an endorsement of a movie review by a customer.
           //A customer's current endorsement of a review for a movie must be at least one day after the customer's endorsement of a review for the same movie. 
-          //The endorsement includes the review ID, the customerID of the endorser, 
-          //and the endoresemnt date. A customer cannot endorse his or her own review.
           //If a review is deleted, all endorsements are also deleted.
           String createTable_Endorsement =
           		  "create table Endorsement ("
-        		+ " review_id int,"
-          		+ " customer_id int,"
-        		+ " endorsementdate timestamp,"
-          		+ " primary key (review_id , customer_id),"
-        		+ " foreign key (review_id) references review (reviewid) on delete cascade,"
-          		+ " foreign key (customer_id) references customer (customerid) on delete cascade"
+        		+ "  ReviewID int,"
+          		+ "  CustomerID int,"
+        		+ "  CurrentEndorsementDate date not null,"
+          		+ "  LastEndorsementDate date not null default CurrentEndorsementDate,"
+          		+ "  primary key (ReviewID , CustomerID),"
+        		+ "  foreign key (ReviewID) references Review (ReviewID) on delete cascade,"
+          		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade,"
+          		+ "  check(CustomerID != (select Review.CustomerID from Endorsement, Review where (Endorsement.ReviewID = Review.ReviewID))),"
+          		+ "  check(datediff(day, LastEndorsementDate, CurrentEndorsementDate) > 1),"
           		+ " )";
           stmt.executeUpdate(createTable_Endorsement);
           System.out.println("Endorsement Table Created");
