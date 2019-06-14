@@ -20,7 +20,7 @@ import java.util.Properties;
  */
 
 public class iRateTables {
-	
+
 	//All the constraints
 	static String [] triggers = {
 		"trigger_writtenBy","trigger_Publisher","trigger_Journal"
@@ -186,7 +186,7 @@ public class iRateTables {
           		  "create table Movie ("
           		+ "  Title varchar(32) not null,"
           		+ "  MovieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
-          		+ "  primary key (MoivieID)"
+          		+ "  primary key (MovieID)"
           		+ ")";
           stmt.executeUpdate(createTable_Movie);
           System.out.println("Movie Table Created");
@@ -198,9 +198,11 @@ public class iRateTables {
           		+ "  MovieID int not null,"
           		+ "  CustomerID int not null,"
           		+ "  AttendanceDATE date not null,"
-          		+ "  primary key (MovieID, CustomerID, AttendanceDATE),"
-          		+ "  foreign key (MovieID) references movie(MovieID) on delete cascade,"
-          		+ "  foreign key (CustomerID) references customer(CustomerID) on delete cascade"
+          		+ "  ReviewCount int default 0,"
+//          		+ "  primary key (MovieID, CustomerID, AttendanceDATE),"
+          		+ "  constraint attPk primary key (MovieID, CustomerID),"
+          		+ "  foreign key (MovieID) references Movie(MovieID) on delete cascade,"
+          		+ "  foreign key (CustomerID) references Customer(CustomerID) on delete cascade"
           		+ ")";
           stmt.executeUpdate(createTable_Attendance);
           System.out.println("Attendance Table Created");
@@ -216,13 +218,12 @@ public class iRateTables {
           		+ "  ReviewDate date not null,"
           		+ "  Review varchar(1000) not null,"
           		+ "  ReviewID int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
-          		+ "  ReviewCount int default 0,"
           		+ "  primary key (ReviewID),"
           		+ "  check(Rating between 0 and 5),"
-          		+ "  constraint foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade,"
-          		+ "  check(ReviewCount < 1)"
-          		+ "  check(datediff(day, ReviewDate, select AttendanceDATE from Review, Attendance"
-          		+ " where(Review.MovieID = Attendance.MovieID and Review.CustomerID = Attendance.CustomerID)) < 7)"
+          		+ "  constraint atte foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade"
+//          		+ "  check(select ReviewCount from Attendance where atte = Attendance.attPk  < 1)"
+//          		+ "  check(datediff(day, ReviewDate, (select AttendanceDATE from Review, Attendance"
+//          		+ " where(Review.MovieID = Attendance.MovieID and Review.CustomerID = Attendance.CustomerID)) < 7))"
           		+ "  )";
           stmt.executeUpdate(createTable_Review);
           System.out.println("Review Table Created");
@@ -234,13 +235,13 @@ public class iRateTables {
           		  "create table Endorsement ("
         		+ "  ReviewID int,"
           		+ "  CustomerID int,"
-        		+ "  CurrentEndorsementDate date not null,"
-          		+ "  LastEndorsementDate date not null default CurrentEndorsementDate,"
+        		+ "  CurrentEndorsementDate timestamp not null,"
+          		+ "  LastEndorsementDate timestamp not null,"
           		+ "  primary key (ReviewID , CustomerID),"
         		+ "  foreign key (ReviewID) references Review (ReviewID) on delete cascade,"
-          		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade,"
-          		+ "  check(CustomerID != (select Review.CustomerID from Endorsement, Review where (Endorsement.ReviewID = Review.ReviewID))),"
-          		+ "  check(datediff(day, LastEndorsementDate, CurrentEndorsementDate) > 1),"
+          		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade"
+//          		+ "  check(CustomerID != (select Review.CustomerID from Endorsement, Review where (Endorsement.ReviewID = Review.ReviewID))),"
+//          		+ "  check(timestampdiff(HOUR, CurrentEndorsementDate, LastEndorsementDate) > 1)"
           		+ " )";
           stmt.executeUpdate(createTable_Endorsement);
           System.out.println("Endorsement Table Created");
