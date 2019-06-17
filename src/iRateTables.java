@@ -23,11 +23,11 @@ public class iRateTables {
 
 	//All the constraints
 	static String [] triggers = {
-		"trigger_writtenBy","trigger_Publisher","trigger_Journal"
+		"CreateAttendance","CreateReview","CreateEndorsement"
 	};
-	static String [] dependentTables = {"Endorsement","review","Attendance"};
+	static String [] dependentTables = {"Endorsement","Review","Attendance"};
 	static String [] independentTables= {"Customer", "Movie","Endorsement"};
-	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
+//	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
 	public static void main(String[] args) {
 	    // the default framework is embedded
 		String protocol = "jdbc:derby:";
@@ -36,7 +36,7 @@ public class iRateTables {
 		
 		Properties props = new Properties(); // connection properties
         // providing a user name and password is optional in the embedded
-        // and derbyclient frameworks
+        // and derby client frameworks
         props.put("user", "user1");
         props.put("password", "user1");
 
@@ -111,21 +111,22 @@ public class iRateTables {
 		}
 		
 	}
-	/**
-	 * drop functions
-	 * @param stmt
-	 */
-	public static void dropFunctions(Statement stmt) {
-		for (String function: functions) {
-			try {
-				stmt.executeUpdate("Drop function "+function);
-			}
-			catch(SQLException ex) {
-				System.out.printf("Function %s not yet created\n",function);
-			}
-		}
-		System.out.println("All Functions Dropped");
-	}
+//	/**
+//	 * drop functions
+//	 * @param stmt
+//	 */
+//	public static void dropFunctions(Statement stmt) {
+//		for (String function: functions) {
+//			try {
+//				stmt.executeUpdate("Drop function "+function);
+//			}
+//			catch(SQLException ex) {
+//				System.out.printf("Function %s not yet created\n",function);
+//			}
+//		}
+//		System.out.println("All Functions Dropped");
+//	}
+	
 	/**
 	 * drop triggers
 	 * @param stmt
@@ -169,7 +170,7 @@ public class iRateTables {
     	try {
     		
     		//The information is entered by the theater when the customer registers.
-    	    //If a customer is deleted, all of his or her reviews and endorsements are deleted
+    	    //If a customer is deleted, all of his or her reviews and endorsements are deleted.
            String createTable_Customer =
             		  "create table Customer ("
             		+ "  CustomerID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 5),"
@@ -198,9 +199,8 @@ public class iRateTables {
           		+ "  MovieID int not null,"
           		+ "  CustomerID int not null,"
           		+ "  AttendanceDATE date not null,"
-          		+ "  ReviewCount int default 0,"
 //          		+ "  primary key (MovieID, CustomerID, AttendanceDATE),"
-          		+ "  constraint attPk primary key (MovieID, CustomerID),"
+          		+ "  primary key (MovieID, CustomerID),"
           		+ "  foreign key (MovieID) references Movie(MovieID) on delete cascade,"
           		+ "  foreign key (CustomerID) references Customer(CustomerID) on delete cascade"
           		+ ")";
@@ -208,8 +208,7 @@ public class iRateTables {
           System.out.println("Attendance Table Created");
           
           //This is a review of a particular movie attended by a customer within the last week.
-          //There can only be one movie review per customer, and the date of the review must be within 7 days of the most recent attendance of the movie.
-          //If a movie is deleted, all of its reviews are also delete
+          //There can only be one movie review per customer; If a movie is deleted, all of its reviews are also delete
           String createTable_Review =
           		  "create table Review ("
           		+ "  MovieID int not null,"
@@ -220,28 +219,21 @@ public class iRateTables {
           		+ "  ReviewID int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
           		+ "  primary key (ReviewID),"
           		+ "  check(Rating between 0 and 5),"
-          		+ "  constraint atte foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade"
-//          		+ "  check(select ReviewCount from Attendance where atte = Attendance.attPk  < 1)"
-//          		+ "  check(datediff(day, ReviewDate, (select AttendanceDATE from Review, Attendance"
-//          		+ " where(Review.MovieID = Attendance.MovieID and Review.CustomerID = Attendance.CustomerID)) < 7))"
+          		+ "  foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade"
           		+ "  )";
           stmt.executeUpdate(createTable_Review);
           System.out.println("Review Table Created");
           
           //This is an endorsement of a movie review by a customer.
-          //A customer's current endorsement of a review for a movie must be at least one day after the customer's endorsement of a review for the same movie. 
           //If a review is deleted, all endorsements are also deleted.
           String createTable_Endorsement =
           		  "create table Endorsement ("
         		+ "  ReviewID int,"
           		+ "  CustomerID int,"
-        		+ "  CurrentEndorsementDate timestamp not null,"
-          		+ "  LastEndorsementDate timestamp not null,"
+        		+ "  EndorsementDate timestamp not null,"
           		+ "  primary key (ReviewID , CustomerID),"
         		+ "  foreign key (ReviewID) references Review (ReviewID) on delete cascade,"
           		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade"
-//          		+ "  check(CustomerID != (select Review.CustomerID from Endorsement, Review where (Endorsement.ReviewID = Review.ReviewID))),"
-//          		+ "  check(timestampdiff(HOUR, CurrentEndorsementDate, LastEndorsementDate) > 1)"
           		+ " )";
           stmt.executeUpdate(createTable_Endorsement);
           System.out.println("Endorsement Table Created");
@@ -263,17 +255,41 @@ public class iRateTables {
      * Implement Triggers
      * @param stmt
      */
+
     public static void createTriggers(Statement stmt) {
     	try {
-    		//trigger for writtenby Table
-        	String create_trigger_writtenBy = 
-        			"create Trigger trigger_writtenBy"
-        			+ " After Delete On WrittenBy "
-        			+ " For Each Statement"
-        			+ " Delete From Author where ORCID Not In"
-        			+ " (Select authorORCID From WrittenBy) ";
-			stmt.execute(create_trigger_writtenBy);
+    		//trigger for Review table
+    		//The date of the review must be within 7 days of the most recent attendance of the movie.
+        	String CreateTrigger_CreateReview = 
+        			"create trigger CreateReview"
+        			+ " before insert on Review"
+        			+ " for each row"
+        			+ " begin"
+        			+ " if(datediff(day, new.ReviewDate, (select AttendanceDATE from Attendance" 
+        			+ " where(MovieID = new.MovieID and CustomerID = Review.CustomerID)) > 7) then"
+        			+ " signal sqlstate 'ERROR' set message_text = 'The review can't be added.';"
+        			+ " end if;"
+        			+ " end;";
+			stmt.execute(CreateTrigger_CreateReview);
 		
+			//trigger for Endorsement table
+	        //A customer's current endorsement of a review for a movie must be at least one day after the customer's endorsement of a review for the same movie. 
+			//A customer cannot endorse his or her own review. 
+        	String CreateTrigger_CreateEndorsement = 
+        			"create trigger CreateEndorsement"
+        			+ " before insert on Endorsement"
+        			+ " for each row"
+        			+ " begin"
+        			+ " if(new.CustomerID = (select CustomerID from Review where ReviewID = new.ReviewID)) then"
+        			+ " signal sqlstate 'ERROR' set message_text = 'The customer cannot endorse his or her own review.';"
+        			+ " end if;"
+        			+ " if(new.CustomerID in (select CustomerID from Endorsement) &&"
+        			+ " (select MovieID from Review where ReviewID = new.ReviewID) in (select MovieID from Endorsement, Review where Endorsement.ReviewID = Review.ReviewID) &&"
+        			+ " timestampdiff(HOUR, new.EndorsementDate, LastEndorsementDate) < 1"
+        			+ " signal sqlstate 'ERROR' set message_text = 'The endorsement for the same movie can't be added within one day.';"
+        			+ " end if;"
+        			+ " end;";
+			stmt.execute(CreateTrigger_CreateEndorsement);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
