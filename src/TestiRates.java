@@ -52,20 +52,24 @@ public class TestiRates {
 			//call to store data into database
 			setDefaultData.defaultData(conn,stmt,rs);
 			
-			for(String table: independentTables) {
-				System.out.println("Table: "+table);
-				printTable(stmt,table,rs);
-			}
-			for(String table: dependentTables) {
-				System.out.println("Table: "+table);
-				printTable(stmt,table,rs);
-			}
+//			for(String table: independentTables) {
+//				System.out.println("Table: "+table);
+//				printTable(stmt,table,rs);
+//			}
+//			for(String table: dependentTables) {
+//				System.out.println("Table: "+table);
+//				printTable(stmt,table,rs);
+//			}
 			
 		
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
     }
+	
+	static void testTriggers(Statement stmt, String table, ResultSet rs) {
+		
+	}
 	static void printTable(Statement stmt, String table, ResultSet rs) {
 		try {
 			rs = stmt.executeQuery("SELECT * From "+table);

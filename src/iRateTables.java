@@ -25,6 +25,9 @@ public class iRateTables {
 	static String [] triggers = {
 		"CreateAttendance","CreateReview","CreateEndorsement"
 	};
+	static String [] functions = {
+		"getLastReviewDate","validEndorsement"
+	};
 	static String [] dependentTables = {"Endorsement","Review","Attendance","Endorsement"	};
 	static String [] independentTables= {"Customer", "Movie"};
 //	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
@@ -54,6 +57,7 @@ public class iRateTables {
             
 			
 			//clear database
+	        dropFunctions(stmt);
 	        //dropTriggers(stmt);
 	        dropTables(stmt, dependentTables);
 			dropTables(stmt, independentTables);
@@ -63,6 +67,7 @@ public class iRateTables {
 			//store_booleanFunctions(stmt);
 			createTables(stmt);
 			//createTriggers(stmt);
+			store_functions(stmt);
 		
 	        
 		} catch (SQLException e) {
@@ -85,6 +90,23 @@ public class iRateTables {
 			}
 		}
 		System.out.println("All Triggers Dropped");
+
+	}
+	/**
+	 * drop functions
+	 * @param stmt
+	 */
+	public static void dropFunctions(Statement stmt) {
+		for (String function: functions) {
+			try {
+				stmt.executeUpdate("Drop function "+function);
+				
+			}
+			catch(SQLException ex) {
+				//System.out.println("No Trigger Dropped");
+			}
+		}
+		System.out.println("All Triggers function");
 
 	}
 	/**
@@ -256,20 +278,20 @@ public class iRateTables {
     				+ "    set RDATE = ("
     				+ "      SELECT TOP 1 EndorsementDate FROM Endorsement "
     				+ "      WHERE REVIEWID=RID "
-    				+ "      ORDER BY EndorsementDate DES"
+    				//+ "      ORDER BY EndorsementDate DES"
     				+ "    )"
-    				+ "    END IF;"
-    				+ " RETURN RDATE";
+    				+ " RETURN RDATE"
+    				+ " End ";
     		stmt.executeUpdate(getLastReviewDate);
     		
-    		String validEndorsement =
-    				"CREATE FUNCTION validEndorsement (rDate date, endorsementDate Date)"
-    				+ " RETURNS BOOLEAN "
-    				+ " PARAMETER STYLE JAVA "
-    				+ " LANGUAGE JAVA "
-    				+ " EXTERNAL NAME "
-    				+ "'Functions.validEndorsement'";
-    		stmt.executeUpdate(validEndorsement);
+//    		String validEndorsement =
+//    				"CREATE FUNCTION validEndorsement (rDate date, endorsementDate Date)"
+//    				+ " RETURNS BOOLEAN "
+//    				+ " PARAMETER STYLE JAVA "
+//    				+ " LANGUAGE JAVA "
+//    				+ " EXTERNAL NAME "
+//    				+ "'Functions.validEndorsement'";
+//    		stmt.executeUpdate(validEndorsement);
     		
     		
 		} catch (SQLException e) {
