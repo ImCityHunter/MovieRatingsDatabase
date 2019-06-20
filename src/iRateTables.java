@@ -26,7 +26,7 @@ public class iRateTables {
 		"CreateAttendance","CreateReview","CreateEndorsement"
 	};
 	static String [] functions = {
-		"getLastReviewDate","validEndorsement"
+		"getLastReviewDate","validEndorsement","getlastAttendenceDate"
 	};
 	static String [] dependentTables = {"Endorsement","Review","Attendance","Endorsement"	};
 	static String [] independentTables= {"Customer", "Movie"};
@@ -58,7 +58,7 @@ public class iRateTables {
 			
 			//clear database
 	        dropFunctions(stmt);
-	        //dropTriggers(stmt);
+	        dropTriggers(stmt);
 	        dropTables(stmt, dependentTables);
 			dropTables(stmt, independentTables);
 			
@@ -66,7 +66,7 @@ public class iRateTables {
 			//store_utilityFunctions(stmt);
 			//store_booleanFunctions(stmt);
 			createTables(stmt);
-			//createTriggers(stmt);
+			createTriggers(stmt);
 			store_functions(stmt);
 		
 	        
@@ -230,14 +230,21 @@ public class iRateTables {
     		//The date of the review must be within 7 days of the most recent attendance of the movie.
         	String CreateTrigger_CreateReview = 
         			"create trigger CreateReview"
-        			+ " before insert on Review"
-        			+ " for each row"
-        			+ " begin"
-        			+ " if(datediff(day, new.ReviewDate, (select AttendanceDATE from Attendance" 
-        			+ " where(MovieID = new.MovieID and CustomerID = Review.CustomerID)) > 7) then"
-        			+ " signal sqlstate 'ERROR' set message_text = 'The review can't be added.';"
-        			+ " end if;"
-        			+ " end;";
+        			+ " after insert on Review"
+        			+ " referencing new as new "
+        			+ " for each statement"
+        			+ " delete from review where ReviewDate < "
+        			+ " (select AttendanceDATE from Attendance "
+        			+ " where movieid = newid and CustomerID = new.CustomerID)";
+//        			+ " for each statement"
+//        			+ " insert from ";
+//        			+ " for each row"
+//        			+ " begin "
+//        			+ " if(datediff(day, new.ReviewDate, (select AttendanceDATE from Attendance" 
+//        			+ " where(MovieID = new.MovieID and CustomerID = Review.CustomerID)) > 7) then"
+//        			+ " signal sqlstate 'ERROR' set message_text = 'The review can't be added.';"
+//        			+ " end if;"
+//        			+ " end;";
 			stmt.execute(CreateTrigger_CreateReview);
 		
 			//trigger for Endorsement table
@@ -257,7 +264,7 @@ public class iRateTables {
         			+ " signal sqlstate 'ERROR' set message_text = 'The endorsement for the same movie can't be added within one day.';"
         			+ " end if;"
         			+ " end;";
-			stmt.execute(CreateTrigger_CreateEndorsement);
+			//stmt.execute(CreateTrigger_CreateEndorsement);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -267,31 +274,62 @@ public class iRateTables {
     public static void store_functions (Statement stmt) {
     	try {
     		
+    		//use for endorsement
+//    		String getLastReviewDate =
+//    				"CREATE FUNCTION getLastReviewDate(rID int)"
+//    				+ " RETURNS DATE "
+//    				+ " PARAMETER SQL "
+//    				+ " LANGUAGE SQL "
+//    				+ " BEGIN "
+//    				+ "    DECLARE RDATE DATE "
+//    				+ "    set RDATE = ("
+//    				+ "      SELECT EndorsementDate FROM Endorsement "
+//    				+ "      WHERE REVIEWID=RID "
+//    				//+ "      ORDER BY EndorsementDate DES"
+//    				+ "    )"
+//    				+ " RETURN RDATE"
+//    				+ " End ";
+//    		stmt.executeUpdate(getLastReviewDate);
     		
-    		String getLastReviewDate =
-    				"CREATE FUNCTION getLastReviewDate(rID int)"
-    				+ " RETURNS DATE "
-    				+ " PARAMETER SQL "
-    				+ " LANGUAGE SQL "
+    		String getlastAttendenceDate=
+    				"CREATE FUNCTION getLastAttendance (CID INT)"
+    				+" RETURNS int"
+//    				+" PARAMETER STYLE JAVA "
+//    				+" LANGUAGE JAVA "
+//    				+" CONTAIN SQL"
+					+" AS "
+    				+" BEGIN "
+    				+"    DECLARE LDATE INT; "
+    				+"    SET LDATE=1;"
+//    				+"    SELECT AttendanceDATE FROM ATTENDANCE "
+//    				+"    WHERE MOVIEID=MID AND CUSTOMERID=CID"
+//    				+"        ORDER BY AttendanceDATE DES)"
+    				+"    RETURN 1; "
+    				+" END ";
+    		//stmt.executeUpdate(getlastAttendenceDate);
+    		
+    		String example=
+    				"CREATE FUNCTION calcProfit(cost FLOAT, price FLOAT) RETURNS DECIMAL(9,2)"
+    				+ " Externe"
     				+ " BEGIN "
-    				+ "    DECLARE RDATE DATE "
-    				+ "    set RDATE = ("
-    				+ "      SELECT TOP 1 EndorsementDate FROM Endorsement "
-    				+ "      WHERE REVIEWID=RID "
-    				//+ "      ORDER BY EndorsementDate DES"
-    				+ "    )"
-    				+ " RETURN RDATE"
-    				+ " End ";
-    		stmt.executeUpdate(getLastReviewDate);
+    		 		+ " DECLARE profit DECIMAL(9,2);"
+    		 		+ " IF price > cost THEN " 
+    		 		+ "  SET profit = price - cost;" 
+    				+ "  ELSE SET profit = 0; END IF;" 
+    				+ " RETURN profit" 
+    				+ " END";
+    		//stmt.executeUpdate(example);
     		
-//    		String validEndorsement =
-//    				"CREATE FUNCTION validEndorsement (rDate date, endorsementDate Date)"
-//    				+ " RETURNS BOOLEAN "
-//    				+ " PARAMETER STYLE JAVA "
-//    				+ " LANGUAGE JAVA "
-//    				+ " EXTERNAL NAME "
-//    				+ "'Functions.validEndorsement'";
-//    		stmt.executeUpdate(validEndorsement);
+    		
+    		String validEndorsement =
+    				"CREATE FUNCTION validEndorsement (rDate date, endorsementDate Date)"
+    				+ " RETURNS BOOLEAN "
+    				+ " PARAMETER STYLE JAVA "
+    				+ " LANGUAGE JAVA "
+    				+ " NO SQL "
+    				+ " EXTERNAL NAME "
+    				+ "'Functions.validEndorsement'";
+    		stmt.executeUpdate(validEndorsement);
     		
     		
 		} catch (SQLException e) {

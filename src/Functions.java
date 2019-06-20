@@ -24,16 +24,9 @@ public class Functions {
 	 * @param date (attendance date)
 	 * @return
 	 */
-	static boolean validReviewDate(Date date) {
+	static boolean validReviewDate(Date lastAttendance, Date reviewDate) {
 		boolean valid = false;
-		try {
-			Date today = (Date) sdf.parse(defaultDate);
-			if(today.compareTo(date)>=7) valid= true;
-			
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		if(lastAttendance.compareTo(reviewDate)<=7) valid= true;
 		return valid;
 	}
 	static Date lastReviewDate(int CustomerID, int ReviewID) {
@@ -41,7 +34,8 @@ public class Functions {
 		
 		return null;
 	}
-	static Date lastAttendanceDate(int CustomerID, int MovieID) {
+	static Date lastAttendanceDate(int CID, int MID) {
+		String select="select attendancedate from attendance where customerid ="+CID+" and movieid = "+MID;
 		return null;
 	}
 }
