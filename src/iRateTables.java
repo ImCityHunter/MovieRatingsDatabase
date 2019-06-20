@@ -25,25 +25,28 @@ public class iRateTables {
 	static String [] triggers = {
 		"CreateAttendance","CreateReview","CreateEndorsement"
 	};
-	static String [] dependentTables = {"Endorsement","Review","Attendance"};
-	static String [] independentTables= {"Customer", "Movie","Endorsement"};
+	static String [] dependentTables = {"Endorsement","Review","Attendance","Endorsement"	};
+	static String [] independentTables= {"Customer", "Movie"};
 //	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
 	public static void main(String[] args) {
 	    // the default framework is embedded
 		String protocol = "jdbc:derby:";
 	    String dbName = "publication";
 		String connStr = protocol + dbName+ ";create=true";
-		
+		String postGres = "jdbc:derby://localhost:1527/publication;create=true;user=user1;password=user1";
+		String databaseURL = "jdbc:derby://localhost:1527/publication;create=true";
 		Properties props = new Properties(); // connection properties
         // providing a user name and password is optional in the embedded
         // and derby client frameworks
         props.put("user", "user1");
         props.put("password", "user1");
-
+        
 		try (
 			
 	        // connect to the database using URL
+			//Connection conn = DriverManager.getConnection(postGres);
 			Connection conn = DriverManager.getConnection(connStr, props);
+				
 	        // statement is channel for sending commands thru connection 
 	        Statement stmt = conn.createStatement();
 		){
@@ -55,9 +58,7 @@ public class iRateTables {
 	        dropTables(stmt, dependentTables);
 			dropTables(stmt, independentTables);
 			
-			
 			//build database
-			
 			//store_utilityFunctions(stmt);
 			//store_booleanFunctions(stmt);
 			createTables(stmt);
@@ -68,64 +69,6 @@ public class iRateTables {
 			e.printStackTrace();
 		}
     }
-	/**
-	 * call to create and store functions in database
-	 * @param stmt
-	 */
-	static void store_utilityFunctions(Statement stmt) {
-		
-		try {
-			String parseISSN=
-				"CREATE FUNCTION parseISSN(ISSN VARCHAR(64))"
-				+ " RETURNS int "
-				+ " PARAMETER STYLE JAVA "
-				+ " LANGUAGE JAVA "
-				+ " EXTERNAL NAME "
-				+ "'Biblio.parseIssn'";
-			stmt.executeUpdate(parseISSN);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println("All Utility Functions Created ");
-	}
-	
-	/**
-	 * call to store functions in database
-	 * @param stmt
-	 */
-	static void store_booleanFunctions(Statement stmt) {
-		try {
-		String isISSN =
-				"CREATE FUNCTION isISSN(ISSN int)"
-				+ " RETURNS BOOLEAN "
-				+ " PARAMETER STYLE JAVA "
-				+ " LANGUAGE JAVA "
-				+ " DETERMINISTIC "
-				+ " EXTERNAL NAME "
-				+ "'Biblio.isIssn'";
-		stmt.executeUpdate(isISSN);	
-		} catch (SQLException e) {
-			e.printStackTrace();
-			System.err.println("Not all function created");
-		}
-		
-	}
-//	/**
-//	 * drop functions
-//	 * @param stmt
-//	 */
-//	public static void dropFunctions(Statement stmt) {
-//		for (String function: functions) {
-//			try {
-//				stmt.executeUpdate("Drop function "+function);
-//			}
-//			catch(SQLException ex) {
-//				System.out.printf("Function %s not yet created\n",function);
-//			}
-//		}
-//		System.out.println("All Functions Dropped");
-//	}
 	
 	/**
 	 * drop triggers
@@ -156,6 +99,7 @@ public class iRateTables {
             try {
             	stmt.executeUpdate("drop table "+table);
             } catch (SQLException ex) {
+            	//ex.printStackTrace();
         		//System.out.println("Did not drop table "+table);
             }  	
         }
@@ -173,7 +117,7 @@ public class iRateTables {
     	    //If a customer is deleted, all of his or her reviews and endorsements are deleted.
            String createTable_Customer =
             		  "create table Customer ("
-            		+ "  CustomerID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 5),"
+            		+ "  CustomerID int not null,"
             		+ "  Name varchar(32) not null,"
             		+ "  Email varchar(64) not null,"
             		+ "  JoinedDate date not null,"
@@ -186,7 +130,8 @@ public class iRateTables {
            String createTable_Movie =
           		  "create table Movie ("
           		+ "  Title varchar(32) not null,"
-          		+ "  MovieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
+          		+ "  MovieID int not null,"
+          		//+ "  MovieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
           		+ "  primary key (MovieID)"
           		+ ")";
           stmt.executeUpdate(createTable_Movie);
@@ -199,7 +144,6 @@ public class iRateTables {
           		+ "  MovieID int not null,"
           		+ "  CustomerID int not null,"
           		+ "  AttendanceDATE date not null,"
-//          		+ "  primary key (MovieID, CustomerID, AttendanceDATE),"
           		+ "  primary key (MovieID, CustomerID),"
           		+ "  foreign key (MovieID) references Movie(MovieID) on delete cascade,"
           		+ "  foreign key (CustomerID) references Customer(CustomerID) on delete cascade"
@@ -216,7 +160,8 @@ public class iRateTables {
           		+ "  Rating int not null,"
           		+ "  ReviewDate date not null,"
           		+ "  Review varchar(1000) not null,"
-          		+ "  ReviewID int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
+          		//+ "  ReviewID int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
+          		+ "  ReviewId int not null,"
           		+ "  primary key (ReviewID),"
           		+ "  check(Rating between 0 and 5),"
           		+ "  foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade"
@@ -225,12 +170,13 @@ public class iRateTables {
           System.out.println("Review Table Created");
           
           //This is an endorsement of a movie review by a customer.
+          //and this customerid cannot be the same as the one if the reviewTable
           //If a review is deleted, all endorsements are also deleted.
           String createTable_Endorsement =
           		  "create table Endorsement ("
         		+ "  ReviewID int,"
           		+ "  CustomerID int,"
-        		+ "  EndorsementDate timestamp not null,"
+        		+ "  EndorsementDate DATE not null,"
           		+ "  primary key (ReviewID , CustomerID),"
         		+ "  foreign key (ReviewID) references Review (ReviewID) on delete cascade,"
           		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade"
@@ -290,6 +236,42 @@ public class iRateTables {
         			+ " end if;"
         			+ " end;";
 			stmt.execute(CreateTrigger_CreateEndorsement);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public static void store_functions (Statement stmt) {
+    	try {
+    		
+    		
+    		String getLastReviewDate =
+    				"CREATE FUNCTION getLastReviewDate(rID int)"
+    				+ " RETURNS DATE "
+    				+ " PARAMETER SQL "
+    				+ " LANGUAGE SQL "
+    				+ " BEGIN "
+    				+ "    DECLARE RDATE DATE "
+    				+ "    set RDATE = ("
+    				+ "      SELECT TOP 1 EndorsementDate FROM Endorsement "
+    				+ "      WHERE REVIEWID=RID "
+    				+ "      ORDER BY EndorsementDate DES"
+    				+ "    )"
+    				+ "    END IF;"
+    				+ " RETURN RDATE";
+    		stmt.executeUpdate(getLastReviewDate);
+    		
+    		String validEndorsement =
+    				"CREATE FUNCTION validEndorsement (rDate date, endorsementDate Date)"
+    				+ " RETURNS BOOLEAN "
+    				+ " PARAMETER STYLE JAVA "
+    				+ " LANGUAGE JAVA "
+    				+ " EXTERNAL NAME "
+    				+ "'Functions.validEndorsement'";
+    		stmt.executeUpdate(validEndorsement);
+    		
+    		
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

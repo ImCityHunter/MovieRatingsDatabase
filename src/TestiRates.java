@@ -1,6 +1,5 @@
 
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,7 +27,7 @@ import java.util.Properties;
  */
 public class TestiRates {
 	static String [] dependentTables = {"Endorsement","review","Attendance"};
-	static String [] independentTables= {"Customer", "Movie","Endorsement"};
+	static String [] independentTables= {"Customer", "Movie"};
 	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
 	public static void main(String[] args) {
 	    // the default framework is embedded
@@ -52,14 +51,22 @@ public class TestiRates {
 			Statement stmt = conn.createStatement();
 			//call to store data into database
 			setDefaultData.defaultData(conn,stmt,rs);
-			printTable(stmt,"customer",rs);
+			
+			for(String table: independentTables) {
+				System.out.println("Table: "+table);
+				printTable(stmt,table,rs);
+			}
+			for(String table: dependentTables) {
+				System.out.println("Table: "+table);
+				printTable(stmt,table,rs);
+			}
 			
 		
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
     }
-	public static void printTable(Statement stmt, String table, ResultSet rs) {
+	static void printTable(Statement stmt, String table, ResultSet rs) {
 		try {
 			rs = stmt.executeQuery("SELECT * From "+table);
 			ResultSetMetaData rsmd = rs.getMetaData();
@@ -79,12 +86,13 @@ public class TestiRates {
 		     System.out.format(eventFormat,row);
 		     while (rs.next()) {
 		        for (int i = 1; i <= numberOfColumns; i++) {
-		         
+		        	
 		            String columnValue = rs.getString(i);
 		            row [i-1] = columnValue;
 		          } 
-		        }
-		     System.out.format(eventFormat, row);
+		        System.out.format(eventFormat, row);
+		     }
+		     System.out.println();
 		      
 		   
 			rs.close();
