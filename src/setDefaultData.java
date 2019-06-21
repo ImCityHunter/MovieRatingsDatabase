@@ -198,26 +198,29 @@ public class setDefaultData {
 					Date revdate = res.getDate("reviewDate");
 //					System.out.println(cid1);
 //					System.out.println(mid);
-					//endorsement within 3 days
-					System.out.println(revdate);
-//					if(cid != cid1 && (endorsedate.getTime() - revdate.getTime()) / 864000 <= 3) {
-					if(cid != cid1) {
-						System.out.println("1");
+					//endorsement within 3 day
+					if(cid != cid1 && (endorsedate.getTime() - revdate.getTime()) / 86400000 <= 3) {
+//						System.out.println("1");
 						Statement stmt1 = conn.createStatement();
 						query = "select endorsementDate from Review join Endorsement on Review.movieID = " + mid + " order by endorsementDate DESC";
 						ResultSet res1 = stmt1.executeQuery(query);
 						Date lastEndorseDate = endorsedate;
+					
 						if(res1.next()) {
-//							System.out.println("1");
+							System.out.println("1");
 						    lastEndorseDate = res1.getDate(1);
-						}
-						if(res1 == null || (endorsedate.getTime() - lastEndorseDate.getTime()) / 86400000 > 1) {
+						    if((endorsedate.getTime() - lastEndorseDate.getTime()) / 86400000 > 1){
+						    	insertRow_Endorsement.setInt(1, convertToId(data[0]));
+								insertRow_Endorsement.setInt(2, convertToId(data[1]));
+								insertRow_Endorsement.setString(3, data[2]);
+								insertRow_Endorsement.execute();
+						    }
+						}else {
 							insertRow_Endorsement.setInt(1, convertToId(data[0]));
 							insertRow_Endorsement.setInt(2, convertToId(data[1]));
 							insertRow_Endorsement.setString(3, data[2]);
 							insertRow_Endorsement.execute();
-							// print number of rows in tables
-						}	
+						}
 						}
 //						res1.close();
 					}
