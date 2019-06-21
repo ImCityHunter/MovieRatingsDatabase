@@ -6,24 +6,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbytools.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyrun.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyoptionaltools.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbynet.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_zh_TW.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_zh_CN.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_ru.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_pt_BR.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_pl.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_ko_KR.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_ja_JP.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_it.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_hu.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_fr.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_es.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_de_DE.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyLocale_cs.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derbyclient.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/MovieRatingsDatabase/db-derby-10.14.2.0-bin/lib/derby.jar"/>
+	<classpathentry kind="lib" path="/Users/annie/Apache/db-derby-10.14.2.0-bin/lib/derby.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

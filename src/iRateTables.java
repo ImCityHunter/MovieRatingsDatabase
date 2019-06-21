@@ -66,8 +66,8 @@ public class iRateTables {
 			//store_utilityFunctions(stmt);
 			//store_booleanFunctions(stmt);
 			createTables(stmt);
-			createTriggers(stmt);
-			store_functions(stmt);
+			//createTriggers(stmt);
+			//store_functions(stmt);
 		
 	        
 		} catch (SQLException e) {
@@ -166,7 +166,7 @@ public class iRateTables {
           		+ "  MovieID int not null,"
           		+ "  CustomerID int not null,"
           		+ "  AttendanceDATE date not null,"
-          		+ "  primary key (MovieID, CustomerID),"
+          		+ "  primary key (MovieID, CustomerID, AttendanceDATE),"
           		+ "  foreign key (MovieID) references Movie(MovieID) on delete cascade,"
           		+ "  foreign key (CustomerID) references Customer(CustomerID) on delete cascade"
           		+ ")";
@@ -186,7 +186,8 @@ public class iRateTables {
           		+ "  ReviewId int not null,"
           		+ "  primary key (ReviewID),"
           		+ "  check(Rating between 0 and 5),"
-          		+ "  foreign key(MovieID, CustomerID) references Attendance(MovieID, CustomerID) on delete cascade"
+          		+ "  foreign key (MovieID) references Movie(MovieID) on delete cascade,"
+          		+ "  foreign key (CustomerID) references Customer(CustomerID) on delete cascade"
           		+ "  )";
           stmt.executeUpdate(createTable_Review);
           System.out.println("Review Table Created");
@@ -197,11 +198,11 @@ public class iRateTables {
           String createTable_Endorsement =
           		  "create table Endorsement ("
         		+ "  ReviewID int,"
-          		+ "  CustomerID int,"
+          		+ "  EndorseCustomerID int,"
         		+ "  EndorsementDate DATE not null,"
-          		+ "  primary key (ReviewID , CustomerID),"
+          		+ "  primary key (ReviewID , EndorseCustomerID),"
         		+ "  foreign key (ReviewID) references Review (ReviewID) on delete cascade,"
-          		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade"
+          		+ "  foreign key (EndorseCustomerID) references Customer (CustomerID) on delete cascade"
           		+ " )";
           stmt.executeUpdate(createTable_Endorsement);
           System.out.println("Endorsement Table Created");
