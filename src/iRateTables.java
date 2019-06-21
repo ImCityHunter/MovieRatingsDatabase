@@ -1,6 +1,11 @@
 
+
+
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
@@ -25,55 +30,58 @@ public class iRateTables {
 	static String [] triggers = {
 		"CreateAttendance","CreateReview","CreateEndorsement"
 	};
-	static String [] functions = {
-		"getLastReviewDate","validEndorsement","getlastAttendenceDate"
-	};
-	static String [] dependentTables = {"Endorsement","Review","Attendance","Endorsement"	};
+	static String [] functions = {"checkReviewTableDates","checkEndorsementTable","checkReviewOnce"};
+	static String [] dependentTables = {"Endorsement","Review","Attendance"};
 	static String [] independentTables= {"Customer", "Movie"};
 //	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
-	public static void main(String[] args) {
-	    // the default framework is embedded
-		String protocol = "jdbc:derby:";
-	    String dbName = "publication";
-		String connStr = protocol + dbName+ ";create=true";
-		String postGres = "jdbc:derby://localhost:1527/publication;create=true;user=user1;password=user1";
-		String databaseURL = "jdbc:derby://localhost:1527/publication;create=true";
-		Properties props = new Properties(); // connection properties
-        // providing a user name and password is optional in the embedded
-        // and derby client frameworks
-        props.put("user", "user1");
-        props.put("password", "user1");
-        
-		try (
-			
-	        // connect to the database using URL
-			//Connection conn = DriverManager.getConnection(postGres);
-			Connection conn = DriverManager.getConnection(connStr, props);
-				
-	        // statement is channel for sending commands thru connection 
-	        Statement stmt = conn.createStatement();
-		){
-	        System.out.println("Connected to and created database " + dbName);
-            
-			
-			//clear database
-	        dropFunctions(stmt);
-	        dropTriggers(stmt);
-	        dropTables(stmt, dependentTables);
-			dropTables(stmt, independentTables);
-			
-			//build database
-			//store_utilityFunctions(stmt);
-			//store_booleanFunctions(stmt);
-			createTables(stmt);
-			//createTriggers(stmt);
-			//store_functions(stmt);
-		
-	        
+	static String databaseURL = "jdbc:derby://localhost:1527/publication;create=true";
+	static String embedded ="jdbc:derby:publication;create=true";
+	public static Connection getConnection() {
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection(embedded);
+			System.out.println("database is connected to "+embedded);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println("Database not connected");
 		}
+		return conn;
+	}
+	
+	public static void main(String[] args) {
+			Connection conn = getConnection();
+			try {
+				
+				Statement stmt = conn.createStatement();
+		        System.out.println("connected to "+embedded);
+				//clear database
+		        dropFunctions(stmt);
+		        dropConstraints(stmt);
+		        dropTriggers(stmt);
+		        dropTables(stmt, dependentTables);
+				dropTables(stmt, independentTables);
+
+				store_functions(stmt);
+				createTables(stmt);
+				stmt.close();
+
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+
+
     }
+	public static void dropConstraints(Statement stmt) {
+		try {
+			stmt.execute("alter table review drop constraint valid_reviewDate");
+			stmt.execute("alter table review drop constraint valid_reviewOnce");
+			stmt.execute("alter table endorsement drop constraint checkEndorsementTable");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+		}
+	}
 	
 	/**
 	 * drop triggers
@@ -99,7 +107,8 @@ public class iRateTables {
 	public static void dropFunctions(Statement stmt) {
 		for (String function: functions) {
 			try {
-				stmt.executeUpdate("Drop function "+function);
+				stmt.executeUpdate("Drop Function "+function);
+				System.out.println(function+" is dropped ");
 				
 			}
 			catch(SQLException ex) {
@@ -184,8 +193,10 @@ public class iRateTables {
           		+ "  Review varchar(1000) not null,"
           		//+ "  ReviewID int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
           		+ "  ReviewId int not null,"
-          		+ "  primary key (ReviewID),"
+          		+ "  CONSTRAINT valid_reviewDate check(checkReviewTableDates(CustomerID,MovieID,ReviewDate)),"
+          		+ "  CONSTRAINT valid_reviewOnce check(checkReviewOnce(MovieID, CustomerID)),"
           		+ "  check(Rating between 0 and 5),"
+          		+ "  primary key (ReviewID),"
           		+ "  foreign key (MovieID) references Movie(MovieID) on delete cascade,"
           		+ "  foreign key (CustomerID) references Customer(CustomerID) on delete cascade"
           		+ "  )";
@@ -198,11 +209,12 @@ public class iRateTables {
           String createTable_Endorsement =
           		  "create table Endorsement ("
         		+ "  ReviewID int,"
-          		+ "  EndorseCustomerID int,"
+          		+ "  CustomerID int,"
         		+ "  EndorsementDate DATE not null,"
-          		+ "  primary key (ReviewID , EndorseCustomerID),"
+          		+ "  CONSTRAINT valid_endorsement check(checkEndorsementTable(ReviewID,CustomerID,EndorsementDate)),"
+          		+ "  primary key (ReviewID , CustomerID),"
         		+ "  foreign key (ReviewID) references Review (ReviewID) on delete cascade,"
-          		+ "  foreign key (EndorseCustomerID) references Customer (CustomerID) on delete cascade"
+          		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade"
           		+ " )";
           stmt.executeUpdate(createTable_Endorsement);
           System.out.println("Endorsement Table Created");
@@ -221,121 +233,46 @@ public class iRateTables {
 
    
     /**
-     * Implement Triggers
+     * Create Functions
      * @param stmt
      */
-
-    public static void createTriggers(Statement stmt) {
-    	try {
-    		//trigger for Review table
-    		//The date of the review must be within 7 days of the most recent attendance of the movie.
-        	String CreateTrigger_CreateReview = 
-        			"create trigger CreateReview"
-        			+ " after insert on Review"
-        			+ " referencing new as new "
-        			+ " for each statement"
-        			+ " delete from review where ReviewDate < "
-        			+ " (select AttendanceDATE from Attendance "
-        			+ " where movieid = newid and CustomerID = new.CustomerID)";
-//        			+ " for each statement"
-//        			+ " insert from ";
-//        			+ " for each row"
-//        			+ " begin "
-//        			+ " if(datediff(day, new.ReviewDate, (select AttendanceDATE from Attendance" 
-//        			+ " where(MovieID = new.MovieID and CustomerID = Review.CustomerID)) > 7) then"
-//        			+ " signal sqlstate 'ERROR' set message_text = 'The review can't be added.';"
-//        			+ " end if;"
-//        			+ " end;";
-			stmt.execute(CreateTrigger_CreateReview);
-		
-			//trigger for Endorsement table
-	        //A customer's current endorsement of a review for a movie must be at least one day after the customer's endorsement of a review for the same movie. 
-			//A customer cannot endorse his or her own review. 
-        	String CreateTrigger_CreateEndorsement = 
-        			"create trigger CreateEndorsement"
-        			+ " before insert on Endorsement"
-        			+ " for each row"
-        			+ " begin"
-        			+ " if(new.CustomerID = (select CustomerID from Review where ReviewID = new.ReviewID)) then"
-        			+ " signal sqlstate 'ERROR' set message_text = 'The customer cannot endorse his or her own review.';"
-        			+ " end if;"
-        			+ " if(new.CustomerID in (select CustomerID from Endorsement) &&"
-        			+ " (select MovieID from Review where ReviewID = new.ReviewID) in (select MovieID from Endorsement, Review where Endorsement.ReviewID = Review.ReviewID) &&"
-        			+ " timestampdiff(HOUR, new.EndorsementDate, LastEndorsementDate) < 1"
-        			+ " signal sqlstate 'ERROR' set message_text = 'The endorsement for the same movie can't be added within one day.';"
-        			+ " end if;"
-        			+ " end;";
-			//stmt.execute(CreateTrigger_CreateEndorsement);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
-    
     public static void store_functions (Statement stmt) {
     	try {
-    		
-    		//use for endorsement
-//    		String getLastReviewDate =
-//    				"CREATE FUNCTION getLastReviewDate(rID int)"
-//    				+ " RETURNS DATE "
-//    				+ " PARAMETER SQL "
-//    				+ " LANGUAGE SQL "
-//    				+ " BEGIN "
-//    				+ "    DECLARE RDATE DATE "
-//    				+ "    set RDATE = ("
-//    				+ "      SELECT EndorsementDate FROM Endorsement "
-//    				+ "      WHERE REVIEWID=RID "
-//    				//+ "      ORDER BY EndorsementDate DES"
-//    				+ "    )"
-//    				+ " RETURN RDATE"
-//    				+ " End ";
-//    		stmt.executeUpdate(getLastReviewDate);
-    		
-    		String getlastAttendenceDate=
-    				"CREATE FUNCTION getLastAttendance (CID INT)"
-    				+" RETURNS int"
-//    				+" PARAMETER STYLE JAVA "
-//    				+" LANGUAGE JAVA "
-//    				+" CONTAIN SQL"
-					+" AS "
-    				+" BEGIN "
-    				+"    DECLARE LDATE INT; "
-    				+"    SET LDATE=1;"
-//    				+"    SELECT AttendanceDATE FROM ATTENDANCE "
-//    				+"    WHERE MOVIEID=MID AND CUSTOMERID=CID"
-//    				+"        ORDER BY AttendanceDATE DES)"
-    				+"    RETURN 1; "
-    				+" END ";
-    		//stmt.executeUpdate(getlastAttendenceDate);
-    		
-    		String example=
-    				"CREATE FUNCTION calcProfit(cost FLOAT, price FLOAT) RETURNS DECIMAL(9,2)"
-    				+ " Externe"
-    				+ " BEGIN "
-    		 		+ " DECLARE profit DECIMAL(9,2);"
-    		 		+ " IF price > cost THEN " 
-    		 		+ "  SET profit = price - cost;" 
-    				+ "  ELSE SET profit = 0; END IF;" 
-    				+ " RETURN profit" 
-    				+ " END";
-    		//stmt.executeUpdate(example);
-    		
-    		
-    		String validEndorsement =
-    				"CREATE FUNCTION validEndorsement (rDate date, endorsementDate Date)"
+    		String checkReviewTableDates =
+    				"CREATE FUNCTION checkReviewTableDates(cid int, mid int, reviewDate date)"
     				+ " RETURNS BOOLEAN "
     				+ " PARAMETER STYLE JAVA "
     				+ " LANGUAGE JAVA "
     				+ " NO SQL "
     				+ " EXTERNAL NAME "
-    				+ "'Functions.validEndorsement'";
-    		stmt.executeUpdate(validEndorsement);
+    				+ "'Functions.checkReviewTableDates'";
+    		stmt.executeUpdate(checkReviewTableDates);
+    		//System.out.println("forReviewTable function success");
+    		
+    		String checkEndorsementTable =
+    				"CREATE FUNCTION checkEndorsementTable(rid int, cid int, EndorsementDate date)"
+    				+ " RETURNS BOOLEAN "
+    				+ " PARAMETER STYLE JAVA "
+    				+ " LANGUAGE JAVA "
+    				+ " NO SQL "
+    				+ " EXTERNAL NAME "
+    				+ "'Functions.checkEndorsementTable'";
+    		stmt.executeUpdate(checkEndorsementTable);
+    		
+    		String checkReviewOnce =
+    				"CREATE FUNCTION checkReviewOnce(mid int, cid int)"
+    				+ " RETURNS BOOLEAN "
+    				+ " PARAMETER STYLE JAVA "
+    				+ " LANGUAGE JAVA "
+    				+ " NO SQL "
+    				+ " EXTERNAL NAME "
+    				+ "'Functions.checkReviewOnce'";
+    		stmt.executeUpdate(checkReviewOnce);
     		
     		
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.err.println("caustion when creating functions");
+			//e.printStackTrace();
 		}
     }
 }

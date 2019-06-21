@@ -1,3 +1,5 @@
+
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -172,63 +174,28 @@ public class setDefaultData {
 			}
 		
 	}
-	
 	public static void readEndorsement(Connection conn, Statement stmt, ResultSet rs) {
 		String fileName = "endorsementTable.txt";
 		try (
 				BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
 				// insert prepared statements
 				PreparedStatement insertRow_Endorsement = conn.prepareStatement(
-						"insert into Endorsement (reviewID, EndorseCustomerID, endorsementDATE)values(?, ?, ?)");		
+						"insert into Endorsement (reviewID, CustomerId, endorsementDATE)values(?, ?, ?)");		
 			) {
 	            
 			String line;
 			while ((line = br.readLine()) != null) {
 				// split input line into fields at tab delimiter
 				String[] data = line.split("\t");
-				int rid = convertToId(data[0]);
-				int cid = convertToId(data[1]);
-				Date endorsedate = convertToDate(data[2]);
-				String query = "select customerID, movieID, reviewDate from Review where reviewID = " + rid;
-				ResultSet res = null;
-				res = stmt.executeQuery(query);
-				while(res.next()) {
-					int cid1 = res.getInt("customerID");
-					int mid = res.getInt("movieID");
-					Date revdate = res.getDate("reviewDate");
-//					System.out.println(cid1);
-//					System.out.println(mid);
-					//endorsement within 3 day
-					if(cid != cid1 && (endorsedate.getTime() - revdate.getTime()) / 86400000 <= 3) {
-//						System.out.println("1");
-						Statement stmt1 = conn.createStatement();
-						query = "select endorsementDate from Review join Endorsement on Review.movieID = " + mid + " order by endorsementDate DESC";
-						ResultSet res1 = stmt1.executeQuery(query);
-						Date lastEndorseDate = endorsedate;
-					
-						if(res1.next()) {
-							System.out.println("1");
-						    lastEndorseDate = res1.getDate(1);
-						    if((endorsedate.getTime() - lastEndorseDate.getTime()) / 86400000 > 1){
-						    	insertRow_Endorsement.setInt(1, convertToId(data[0]));
-								insertRow_Endorsement.setInt(2, convertToId(data[1]));
-								insertRow_Endorsement.setString(3, data[2]);
-								insertRow_Endorsement.execute();
-						    }
-						}else {
-							insertRow_Endorsement.setInt(1, convertToId(data[0]));
-							insertRow_Endorsement.setInt(2, convertToId(data[1]));
-							insertRow_Endorsement.setString(3, data[2]);
-							insertRow_Endorsement.execute();
-						}
-						}
-//						res1.close();
-					}
+				insertRow_Endorsement.setInt(1, convertToId(data[0]));
+				insertRow_Endorsement.setInt(2, convertToId(data[1]));
+				insertRow_Endorsement.setString(3, data[2]);
+				insertRow_Endorsement.execute();
+				// print number of rows in tables
 				}
-//				res.close();
-
+				
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.out.println("input not success in endorsement");
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -251,29 +218,18 @@ public class setDefaultData {
 			while ((line = br.readLine()) != null) {
 				// split input line into fields at tab delimiter
 				String[] data = line.split("\t");
-				int mid = convertToId(data[0]);
-				int cid = convertToId(data[1]);
-				Date reviewdate =  convertToDate(data[3]);
-				String query = "select attendanceDate from attendance where movieID = "+ mid + " and customerID = " + cid + " order by attendanceDate DESC";
-				ResultSet res = stmt.executeQuery(query);
-				if(res.next()) {
-					Date attendanceDate = res.getDate(1);
-					if((reviewdate.getTime() - attendanceDate.getTime()) / 86400000 <= 7) {
-						insertRow_Review.setInt(1, convertToId(data[0]));
-						insertRow_Review.setInt(2, convertToId(data[1]));
-						insertRow_Review.setInt(3, convertToId(data[2]));
-						insertRow_Review.setDate(4, convertToDate(data[3]));
-						insertRow_Review.setString(5, data[4]);
-						insertRow_Review.setInt(6, convertToId(data[5]));
-						insertRow_Review.execute();
-					}
+				insertRow_Review.setInt(1, convertToId(data[0]));
+				insertRow_Review.setInt(2, convertToId(data[1]));
+				insertRow_Review.setInt(3, convertToId(data[2]));
+				insertRow_Review.setDate(4, convertToDate(data[3]));
+				insertRow_Review.setString(5, data[4]);
+				insertRow_Review.setInt(6, convertToId(data[5]));
+				insertRow_Review.execute();
+				// print number of rows in tables
 				}
-				res.close();
-			}
-		
 				
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.out.println("input not success in review table");
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();

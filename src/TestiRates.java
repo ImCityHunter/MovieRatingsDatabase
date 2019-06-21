@@ -1,5 +1,7 @@
 
 
+
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,13 +30,11 @@ import java.util.Properties;
 public class TestiRates {
 	static String [] dependentTables = {"Endorsement","review","Attendance"};
 	static String [] independentTables= {"Customer", "Movie"};
-	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
 	public static void main(String[] args) {
 	    // the default framework is embedded
 	    String protocol = "jdbc:derby:";
 	    String dbName = "publication";
-		String connStr = protocol + dbName+ ";create=true";
-
+		String embedded = "jdbc:derby:publication;create=true";
 	    // tables tested by this program
 
 		Properties props = new Properties(); // connection properties
@@ -47,7 +47,7 @@ public class TestiRates {
         ResultSet rs = null;
 
 		try {
-			Connection  conn = DriverManager.getConnection(connStr, props);
+			Connection  conn = DriverManager.getConnection(embedded);
 			Statement stmt = conn.createStatement();
 			//call to store data into database
 			setDefaultData.defaultData(conn,stmt,rs);
@@ -67,6 +67,9 @@ public class TestiRates {
 		}
     }
 	
+	static void testTriggers(Statement stmt, String table, ResultSet rs) {
+		
+	}
 	static void printTable(Statement stmt, String table, ResultSet rs) {
 		try {
 			rs = stmt.executeQuery("SELECT * From "+table);
