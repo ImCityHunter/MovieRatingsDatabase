@@ -2,13 +2,8 @@
 
 
 import java.sql.Connection;
-import java.sql.Date;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
 
 /**
  * This program creates a publication database for the ER data model
@@ -24,7 +19,7 @@ import java.util.Properties;
  * @author philip gust
  */
 
-public class iRateTables {
+public class createTablesBetaVersion {
 
 	//All the constraints
 	static String [] triggers = {
@@ -34,25 +29,14 @@ public class iRateTables {
 	static String [] dependentTables = {"Endorsement","Review","Attendance"};
 	static String [] independentTables= {"Customer", "Movie"};
 //	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
-	static String databaseURL = "jdbc:derby://localhost:1527/publication;create=true";
-	static String embedded ="jdbc:derby:publication;create=true";
-	public static Connection getConnection() {
-		Connection conn = null;
-		try {
-			conn = DriverManager.getConnection(embedded);
-			System.out.println("database is connected to "+embedded);
-		} catch (SQLException e) {
-			System.err.println("Database not connected");
-		}
-		return conn;
-	}
+
+
 	
-	public static void main(String[] args) {
-			Connection conn = getConnection();
+	public static void main(String[] args) throws SQLException {
+			
 			try {
-				
+				Connection conn = Connect.getConnection();
 				Statement stmt = conn.createStatement();
-		        System.out.println("connected to "+embedded);
 				//clear database
 		        dropFunctions(stmt);
 		        dropConstraints(stmt);
@@ -62,12 +46,16 @@ public class iRateTables {
 
 				store_functions(stmt);
 				createTables(stmt);
+				
+				
 				stmt.close();
+				conn.close();
 
-			} catch (SQLException e) {
+			} catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 		
 
 
@@ -245,7 +233,7 @@ public class iRateTables {
     				+ " LANGUAGE JAVA "
     				+ " NO SQL "
     				+ " EXTERNAL NAME "
-    				+ "'Functions.checkReviewTableDates'";
+    				+ "'DBFunctions.checkReviewTableDates'";
     		stmt.executeUpdate(checkReviewTableDates);
     		//System.out.println("forReviewTable function success");
     		
@@ -256,7 +244,7 @@ public class iRateTables {
     				+ " LANGUAGE JAVA "
     				+ " NO SQL "
     				+ " EXTERNAL NAME "
-    				+ "'Functions.checkEndorsementTable'";
+    				+ "'DBFunctions.checkEndorsementTable'";
     		stmt.executeUpdate(checkEndorsementTable);
     		
     		String checkReviewOnce =
@@ -266,7 +254,7 @@ public class iRateTables {
     				+ " LANGUAGE JAVA "
     				+ " NO SQL "
     				+ " EXTERNAL NAME "
-    				+ "'Functions.checkReviewOnce'";
+    				+ "'DBFunctions.checkReviewOnce'";
     		stmt.executeUpdate(checkReviewOnce);
     		
     		

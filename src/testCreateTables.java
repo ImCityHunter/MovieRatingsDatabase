@@ -2,18 +2,13 @@
 
 
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+
 import java.sql.Connection;
-import java.sql.Date;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
+
 
 
 
@@ -27,30 +22,18 @@ import java.util.Properties;
  * 
  * @author philip gust
  */
-public class TestiRates {
+public class testCreateTables {
 	static String [] dependentTables = {"Endorsement","review","Attendance"};
 	static String [] independentTables= {"Customer", "Movie"};
 	public static void main(String[] args) {
-	    // the default framework is embedded
-	    String protocol = "jdbc:derby:";
-	    String dbName = "publication";
-		String embedded = "jdbc:derby:publication;create=true";
-	    // tables tested by this program
 
-		Properties props = new Properties(); // connection properties
-        // providing a user name and password is optional in the embedded
-        // and derbyclient frameworks
-        props.put("user", "user1");
-        props.put("password", "user1");
-
-        // result set for queries
         ResultSet rs = null;
 
 		try {
-			Connection  conn = DriverManager.getConnection(embedded);
+			Connection  conn = Connect.getConnection();
 			Statement stmt = conn.createStatement();
 			//call to store data into database
-			setDefaultData.defaultData(conn,stmt,rs);
+			setDefaultData.defaultData(conn, stmt);
 			
 			for(String table: independentTables) {
 				System.out.println("Table: "+table);
@@ -61,15 +44,12 @@ public class TestiRates {
 				printTable(stmt,table,rs);
 			}
 			
+			
 		
-		} catch (SQLException e) {
+		} catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
     }
-	
-	static void testTriggers(Statement stmt, String table, ResultSet rs) {
-		
-	}
 	static void printTable(Statement stmt, String table, ResultSet rs) {
 		try {
 			rs = stmt.executeQuery("SELECT * From "+table);
