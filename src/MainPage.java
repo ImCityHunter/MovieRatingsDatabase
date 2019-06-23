@@ -4,15 +4,16 @@ import java.sql.Statement;
 import java.util.Scanner;
 
 public class MainPage {
+	
 	public static void main(String args[]) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-		Connection conn = Connect.getConnection();
+		Connection conn = Connect.newConnection();
 		Statement stmt = null;
 		System.out.println();
 		
 		try {
-			stmt = conn.createStatement();
-			CreateTables.create(conn, stmt);
-			setDefaultData.defaultData(conn, stmt);
+//			stmt = conn.createStatement();
+//			CreateTables.create(conn, stmt);
+//			setDefaultData.defaultData(conn, stmt);
 			Scanner readUser = new Scanner(System.in);
 			int option = -1;
 			while(option!=4) {
@@ -33,7 +34,7 @@ public class MainPage {
 					System.out.print("\nBye Bye\n");
 				}
 				else {
-					System.out.print("\n!!!!!!INVALID INPUT!!!!!\n");
+					System.err.print("\n!!!!!!INVALID INPUT!!!!! See Yah \n");
 					option = 4;
 				}
 			}

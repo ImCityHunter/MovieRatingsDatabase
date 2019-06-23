@@ -1,6 +1,7 @@
 
 
 
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -191,6 +192,7 @@ public class CreateTables {
      * @param stmt
      */
     private static void store_functions (Statement stmt) {
+
     	try {
     		String checkReviewTableDates =
     				"CREATE FUNCTION checkReviewTableDates(cid int, mid int, reviewDate date)"

@@ -11,7 +11,7 @@ public class EmployeeView {
 			String read = readUser.nextLine();
 			option = UIFunctions.validId(read);
 			if(option == 1) {
-				insertMovie(conn, stmt, readUser);
+				if(insertMovie(conn, stmt, readUser)) System.out.println("Insert Movie Success");
 			}
 			else if(option ==2) {
 				printMovie(stmt);
@@ -26,25 +26,25 @@ public class EmployeeView {
 		
 	}
 	private static boolean printMovieRating(Connection conn,Statement stmt) {
-		
-		System.out.println("\nAVG Rating Per Movie");
+		System.out.print("\n\n\n\n");
 		ResultSet rs = UIFunctions.checkMovieRate(conn);
 		if(rs==null) return false;
+		System.out.println("\nAVG Rating Per Movie");
 		UIFunctions.printResultSet(rs, stmt);
 		return true;
 	}
 	private static boolean insertMovie (Connection conn, Statement stmt, Scanner readUser) {
-		System.out.println("\n\n\nInputting Movie");
+		System.out.print("\n\n\n\n");
+		System.out.println("Inputting Movie");
 		System.out.print("\ninsert title of the movie: ");
 		String title = readUser.nextLine();
 		if(!UIFunctions.validString(title)) return false;
-		System.out.print("\ninsert id of the movie (all int): ");
-		String getId = readUser.nextLine();
-		int id = UIFunctions.validId(getId);
+		int id = UIFunctions.generateId(conn, "movie");
 		if(id==-1) return false;
 		else return UIFunctions.insertMovie(conn, title, id);
 	}
 	private static void printMovie( Statement stmt) {
+		System.out.print("\n\n\n\n");
 		UIFunctions.printOneTable(stmt, "movie");
 		
 	}

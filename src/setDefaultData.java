@@ -18,8 +18,15 @@ public class setDefaultData {
 	static String [] dependentTables = {"Endorsement","review","Attendance",};
 	static String [] independentTables= {"Customer", "Movie"};
 	static ResultSet rs = null;
+	public static void main(String args[]) throws InstantiationException, IllegalAccessException, ClassNotFoundException, SQLException {
+		Connection conn = Connect.newConnection();
+		Statement stmt = conn.createStatement();
+		CreateTables.create(conn, stmt);
+		defaultData(conn, stmt);
+		UIFunctions.printAllTable(conn);
+		conn.close();
+	}
 	public static void defaultData(Connection conn,Statement stmt) {
-		
 		
 		try {
 			stmt = conn.createStatement();
@@ -92,17 +99,16 @@ public class setDefaultData {
 	            
 			String line;
 			while ((line = br.readLine()) != null) {
+				String[] data = line.split("\t");
+				if (data.length != 4) continue;
 				PreparedStatement insertRow_Customer;
 				try {
 					insertRow_Customer = conn.prepareStatement(
 							"insert into Customer (CustomerID, Name, Email, joinedDate)values(?, ?, ?, ?)");
 					// split input line into fields at tab delimiter
-					String[] data = line.split("\t");
-					
-		            
+
 					int id = convertToId(data[0]);
 		            Date date = convertToDate(data[3]);
-		         
 		            insertRow_Customer.setInt(1, id);
 		            insertRow_Customer.setString(2, data[1]);
 		            insertRow_Customer.setString(3, data[2]);
@@ -110,6 +116,7 @@ public class setDefaultData {
 		            insertRow_Customer.execute();
 					// print number of rows in tables
 				} catch (SQLException e) {
+					e.printStackTrace();
 					System.out.println("one insertion fail in customer");
 				}
 
@@ -135,12 +142,13 @@ public class setDefaultData {
 			
 			String line;
 			while ((line = br.readLine()) != null) {
+				String[] data = line.split("\t");
+				if (data.length != 2) continue;
 				PreparedStatement insertRow_Customer;
 				try {
 					insertRow_Customer = conn.prepareStatement(
 							"insert into Movie (Title, MovieID)values(?, ?)");
 					// split input line into fields at tab delimiter
-					String[] data = line.split("\t");
 					int id = convertToId(data[1]);
 		            insertRow_Customer.setString(1, data[0]);
 		            insertRow_Customer.setInt(2, id);
@@ -170,19 +178,22 @@ public class setDefaultData {
 			) {
 	            
 			String line;
+
 			while ((line = br.readLine()) != null) {
+				String[] data = line.split("\t");
+				if (data.length != 3) continue;
 				PreparedStatement insertRow_Customer;
 				try {
 					insertRow_Customer = conn.prepareStatement(
 							"insert into Attendance(MovieID, CustomerId, AttendanceDATE)values(?, ?, ?)");
 					// split input line into fields at tab delimiter
-					String[] data = line.split("\t");
 		            insertRow_Customer.setInt(1, convertToId(data[0]));
 		            insertRow_Customer.setInt(2, convertToId(data[1]));
 		            insertRow_Customer.setString(3, data[2]);
 		            insertRow_Customer.execute();
 				} catch (SQLException e) {
-					System.out.println("one insertion fail in customer");
+					e.printStackTrace();
+					System.out.println("one insertion fail in Attendance");
 				}
 
 				}
@@ -206,10 +217,11 @@ public class setDefaultData {
 			String line;
 			while ((line = br.readLine()) != null) {
 				PreparedStatement insertRow_Endorsement;
+				String[] data = line.split("\t");
+				if (data.length != 3) continue;
 				try {
 					insertRow_Endorsement = conn.prepareStatement(
 							"insert into Endorsement (reviewID, CustomerId, endorsementDATE)values(?, ?, ?)");
-					String[] data = line.split("\t");
 					insertRow_Endorsement.setInt(1, convertToId(data[0]));
 					insertRow_Endorsement.setInt(2, convertToId(data[1]));
 					insertRow_Endorsement.setString(3, data[2]);
@@ -240,6 +252,7 @@ public class setDefaultData {
 			while ((line = br.readLine()) != null) {
 				// split input line into fields at tab delimiter
 				String[] data = line.split("\t");
+				if (data.length != 6) continue;
 				try {
 					PreparedStatement insertRow_Review = conn.prepareStatement(
 							"insert into Review(MovieId, CustomerId, rating, reviewDate, Review, reviewId)values(?, ?, ?, ?, ?, ?)");		

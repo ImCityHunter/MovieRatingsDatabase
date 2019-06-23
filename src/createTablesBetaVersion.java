@@ -35,7 +35,7 @@ public class createTablesBetaVersion {
 	public static void main(String[] args) throws SQLException {
 			
 			try {
-				Connection conn = Connect.getConnection();
+				Connection conn = Connect.newConnection();
 				Statement stmt = conn.createStatement();
 				//clear database
 		        dropFunctions(stmt);

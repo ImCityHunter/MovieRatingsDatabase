@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Sat Jun 22 18:18:55 PDT 2019:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-016b-81ea-27e6-00000f7849d8 
-on database directory /Users/hky/Desktop/CS5200/iRate/publication with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@799f7e29 
+Sun Jun 23 12:11:38 PDT 2019:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-016b-85c0-42ec-00000f7849d8 
+on database directory /Users/hky/Desktop/CS5200/iRate/iRateDatabase with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@799f7e29 
 Loaded from file:/Users/hky/Desktop/CS5200/db-derby-10.14.2.0-bin/lib/derby.jar
 java.vendor=Oracle Corporation
 java.runtime.version=11.0.2+9-LTS

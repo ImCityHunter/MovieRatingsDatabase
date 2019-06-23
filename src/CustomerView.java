@@ -17,17 +17,24 @@ public class CustomerView {
 				printTable(stmt);	
 			}
 			else if(option ==2) {
-				insertCustomer(conn, readUser);	
+				if(insertCustomer(conn, readUser)) {
+					UIFunctions.printOneTable(stmt, "Customer");
+					System.out.println("Register Success");}
 			}
 			else if(option ==3) {
-				insertAttendance(conn,readUser, stmt);
+				if(insertAttendance(conn,readUser, stmt)) System.out.println("Attendendance Success");
 			}
 			else if(option ==4) {
-				insertReview(conn,readUser);
+				if(insertReview(conn, stmt, readUser)) {
+					System.out.println("Review Inserted");
+					UIFunctions.printOneTable(stmt, "Review");
+					}
 			}
 			else if(option ==5) {
-				readUser.nextLine();
-				insertEndorse(conn, readUser, stmt);
+				if(insertEndorse(conn, readUser, stmt)) {
+					System.out.println("Endorse Success");
+					UIFunctions.printOneTable(stmt, "Endorsement");
+					}
 			}
 			else if(option ==6) {
 				getFreeConcessionLst(conn,stmt,readUser);
@@ -42,26 +49,23 @@ public class CustomerView {
 		
 	}
 	private static boolean getFreeTicketList(Connection conn, Statement stmt, Scanner readUser) {
-		System.out.print("\n\n\n\n\n\n\n");
-		System.out.print("\nGive me a Deadline Date: (format: YYYY-MM-DD)\t");
-		String getDate = readUser.nextLine();
-		java.sql.Date date = UIFunctions.convertToDate(getDate);
-		if(date == null) return false;
+		System.out.print("\n\n\n\n\n");
+//		System.out.print("\nGive me a Deadline Date: (format: YYYY-MM-DD)\t");
+//		String getDate = readUser.nextLine();
+//		java.sql.Date date = UIFunctions.convertToDate(getDate);
+//		if(date == null) return false;
+		ResultSet rs = UIFunctions.getFreeTicketCustomer(conn, today);
+		if(rs==null) return false;
 		
-		System.out.println();//need this to get to next line
-		UIFunctions.getFreeTicketCustomer(conn, date);
-		
+		System.out.println("\n\nResult of the endorsement. #1 will get a free ticket");
+		UIFunctions.printResultSet(rs, stmt);
 		return true;
 		
 	}
 	private static boolean getFreeConcessionLst(Connection conn, Statement stmt, Scanner readUser) {
 		System.out.print("\n\n\n\n\n\n\n");
-		System.out.print("\nGive me a Deadline Date: (format: YYYY-MM-DD)\t");
-		String getDate = readUser.nextLine();
-		java.sql.Date date = UIFunctions.convertToDate(getDate);
-		if(date == null) return false;
 		
-		ResultSet rs = UIFunctions.getFreeConcessionLst(conn, date);
+		ResultSet rs = UIFunctions.getFreeConcessionLst(conn, today);
 		if(rs == null) return false;
 		
 		System.out.println("\nEmails of who get Free Gifts");
@@ -71,10 +75,10 @@ public class CustomerView {
 		return true;
 	}
 	private static boolean insertEndorse(Connection conn, Scanner readUser, Statement stmt) {
-		//"insert into Endorsement (ReviewId, CustomerId, EndorsementDate) values (?, ?, ?)"
+		System.out.print("\n\n\n");
 		UIFunctions.printOneTable(stmt, "review");
-		System.out.println("\n\n Endorse a review!");
-		System.out.print("\nenter a review id:\t");
+		System.out.println("\n\nEndorse a review!");
+		System.out.print("\nEnter a review id:\t");
 		String getRid = readUser.nextLine();
 		int rid = UIFunctions.validId(getRid);
 		if(rid==-1) return false;
@@ -86,7 +90,6 @@ public class CustomerView {
 		return UIFunctions.insertEndorsement(conn, rid, cid, today);
 	}
 	private static boolean insertAttendance(Connection conn, Scanner readUser, Statement stmt) {
-		//"insert into Attendence (MovieId, CustomerId, AttendenceDate) values (?, ?, ?)"
 		System.out.print("\n\n\n\n\n\n");
 		UIFunctions.printOneTable(stmt, "movie");
 		System.out.print("\n\nPick a movie you watched (enter movieid):\t");
@@ -104,12 +107,16 @@ public class CustomerView {
 		java.sql.Date date = UIFunctions.convertToDate(getDate);
 		if(date == null) return false;
 		
-		return UIFunctions.insertAttendence(conn, mid, cid, date);
-	}
-	private static boolean insertReview (Connection conn, Scanner readUser) {
-		//insertReview(Connection conn, String mid, String cid, java.sql.Date date, int rating, String review, int id)
+		boolean valid = UIFunctions.insertAttendance(conn, mid, cid, date);
 		
-		System.out.println("\n\n\nInserting a review:");
+		if(valid) UIFunctions.printOneTable(stmt, "Attendance");
+		
+		return valid;
+	}
+	private static boolean insertReview (Connection conn, Statement stmt, Scanner readUser) {
+		System.out.print("\n\n\n\n");
+		UIFunctions.printOneTable(stmt,"movie");
+		System.out.println("\nInserting a review:");
 		System.out.print("\ninsert a movie id that you watched recently: ");
 		String getMid = readUser.nextLine();
 		int mid = UIFunctions.validId(getMid);
@@ -120,39 +127,34 @@ public class CustomerView {
 		int cid = UIFunctions.validId(getCid);
 		if(cid==-1) return false;
 		
-		System.out.print("\nwhat is your rating for this movie? 1-5 only");
+		System.out.print("\nwhat is your rating for this movie (1-5 only)? \t\t\t");
 		String getRating = readUser.nextLine();
 		int rating = UIFunctions.validId(getRating);
 		if(rating==-1||rating>5) return false;
 		
-		System.out.print("\nwhat is your comment on this review?");
+		System.out.print("\nwhat is your comment on this review? \t\t");
 		String review = readUser.nextLine();
 		if(!UIFunctions.validString(review)) return false;
 		
-		System.out.print("\ngive your review an id (all int): ");
-		String getRid = readUser.nextLine();
-		int rid = UIFunctions.validId(getRid);
+		int rid = UIFunctions.generateId(conn, "review");
 		if(rid==-1) return false;
 		
 		return UIFunctions.insertReview(conn, mid, cid, today, rating, review, rid);
 	}
 	
 	private static boolean insertCustomer (Connection conn, Scanner readUser) {
-
+		
 		System.out.println("\n\n\nRegistering a Customer");
 		System.out.print("\ninsert your name: ");
 		String name = readUser.nextLine();
-		if(!UIFunctions.validString(name)) return false;
-		System.out.print("\ninsert id (all int): ");
-		String getId = readUser.nextLine();
-		int id = UIFunctions.validId(getId);
-		if(id==-1) return false;
 		System.out.print("\nEnter your email (with @): ");
 		String email = readUser.nextLine();
+		int id = UIFunctions.generateId(conn, "customer");
 		if(!UIFunctions.validEmail(email)) return false;
 		else return UIFunctions.registerCustomer(conn, id, name, email, today);
 	}
 	private static void printTable(Statement stmt) {
+		System.out.print("\n\n\n\n");
 		UIFunctions.printOneTable(stmt, "Customer");
 	}
 	private static void printOption() {
