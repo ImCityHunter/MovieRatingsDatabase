@@ -14,20 +14,21 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+/**
+ * This class is to insert some valid data on the database as stored information.
+ *
+ */
 public class setDefaultData {
 	static String [] dependentTables = {"Endorsement","review","Attendance",};
 	static String [] independentTables= {"Customer", "Movie"};
 	static ResultSet rs = null;
-	public static void main(String args[]) throws InstantiationException, IllegalAccessException, ClassNotFoundException, SQLException {
-		Connection conn = Connect.newConnection();
-		Statement stmt = conn.createStatement();
-		CreateTables.create(conn, stmt);
-		defaultData(conn, stmt);
-		UIFunctions.printAllTable(conn);
-		conn.close();
-	}
-	public static void defaultData(Connection conn,Statement stmt) {
 		
+	/**
+	 * Insert data from default file
+	 * @param conn
+	 * @param stmt
+	 */
+	public static void defaultData(Connection conn,Statement stmt) {	
 		try {
 			stmt = conn.createStatement();
 			
@@ -40,32 +41,30 @@ public class setDefaultData {
 	            	System.out.println("Did not truncate table " + tbl);
 	            }
 	        }
+	        
 	        for (String tbl : independentTables) {
 	            try {
 	            	stmt.executeUpdate("delete from " + tbl);
-	            
-	            	//System.out.println("Truncated table " + tbl);
 	            } catch (SQLException ex) {
-	            	ex.printStackTrace();
 	            	System.out.println("Did not truncate table " + tbl);
 	            }
 	        }
+	        
+	        //insert from the file
 			readCustomer(conn,stmt,rs);
 			readMovie(conn,stmt,rs);
 			readAttendance (conn,stmt,rs);
 			readReview(conn,stmt,rs);
 			readEndorsement (conn,stmt,rs);
-			
-			
+						
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 
 	}
+	
 	/**
 	 * convert date from string to java.util.date to sql.date
-	 * @param input
+	 * @param input the date string
 	 * @return
 	 */
 	private static Date convertToDate(String input) {
@@ -77,9 +76,9 @@ public class setDefaultData {
 			e.printStackTrace();
 		}
 		java.sql.Date sqlDate = new java.sql.Date(date.getTime());
-		//System.out.println(sqlDate);
 		return sqlDate;
 	}
+	
 	/**
 	 * convert string to int (id)
 	 * @param id
@@ -89,194 +88,203 @@ public class setDefaultData {
 		int parseInt = Integer.parseInt(id);
 		return parseInt;
 	}
+	
+	/**
+	 * Read from the default customer file
+	 * @param conn
+	 * @param stmt
+	 * @param rs
+	 */
 	private static void readCustomer(Connection conn, Statement stmt, ResultSet rs) {
 		String fileName = "customerTable.txt";
-		try (
-				BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
-				// insert prepared statements
-				
-			) {
-	            
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
 			String line;
-			while ((line = br.readLine()) != null) {
-				String[] data = line.split("\t");
-				if (data.length != 4) continue;
-				PreparedStatement insertRow_Customer;
-				try {
-					insertRow_Customer = conn.prepareStatement(
-							"insert into Customer (CustomerID, Name, Email, joinedDate)values(?, ?, ?, ?)");
-					// split input line into fields at tab delimiter
-
-					int id = convertToId(data[0]);
-		            Date date = convertToDate(data[3]);
-		            insertRow_Customer.setInt(1, id);
-		            insertRow_Customer.setString(2, data[1]);
-		            insertRow_Customer.setString(3, data[2]);
-		            insertRow_Customer.setDate(4, date);
-		            insertRow_Customer.execute();
-					// print number of rows in tables
-				} catch (SQLException e) {
-					e.printStackTrace();
-					System.out.println("one insertion fail in customer");
+			try {
+				while ((line = br.readLine()) != null) {
+					String[] data = line.split("\t");
+					if (data.length != 4) continue;
+					PreparedStatement insertRow_Customer;
+					try {
+						insertRow_Customer = conn.prepareStatement(
+								"insert into Customer (CustomerID, Name, Email, joinedDate)values(?, ?, ?, ?)");
+					
+				        insertRow_Customer.setInt(1, convertToId(data[0]));
+				        insertRow_Customer.setString(2, data[1]);
+				        insertRow_Customer.setString(3, data[2]);
+				        insertRow_Customer.setDate(4, convertToDate(data[3]));
+				        insertRow_Customer.execute();
+						
+					} catch (SQLException e) {
+						System.out.println("one insertion fail in Customer");
+					}
 				}
-
-				}
-				
-			} catch (FileNotFoundException e1) {
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				e.printStackTrace();
 			}
-		
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
+	
+	/**
+	 * Read from the default movie file
+	 * @param conn
+	 * @param stmt
+	 * @param rs
+	 */
 	private static void readMovie(Connection conn, Statement stmt, ResultSet rs) {
 		String fileName = "movieTable.txt";
-		try (
+		try {
 			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
-			// insert prepared statements
-			
-				
-			) {
-			
 			String line;
-			while ((line = br.readLine()) != null) {
-				String[] data = line.split("\t");
-				if (data.length != 2) continue;
-				PreparedStatement insertRow_Customer;
-				try {
-					insertRow_Customer = conn.prepareStatement(
-							"insert into Movie (Title, MovieID)values(?, ?)");
-					// split input line into fields at tab delimiter
-					int id = convertToId(data[1]);
-		            insertRow_Customer.setString(1, data[0]);
-		            insertRow_Customer.setInt(2, id);
-		            insertRow_Customer.execute();
-					// print number of rows in tables
-				} catch (SQLException e) {
-					System.out.println("One insertion fail in movie");
+			try {
+				while ((line = br.readLine()) != null) {
+					String[] data = line.split("\t");
+					if (data.length != 2) continue;
+					PreparedStatement insertRow_Movie;
+					try {
+						insertRow_Movie = conn.prepareStatement(
+								"insert into Movie (Title, MovieID)values(?, ?)");
+						
+			            insertRow_Movie.setString(1, data[0]);
+			            insertRow_Movie.setInt(2, convertToId(data[1]));
+			            insertRow_Movie.execute();
+						
+					} catch (SQLException e) {
+						System.out.println("one insertion fail in Movie");
+					}
 				}
-
-				}
-				
-			} catch (FileNotFoundException e1) {
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				e.printStackTrace();
 			}
-		
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}	
 	}
+	
+	/**
+	 * Read form the default attendance file
+	 * @param conn
+	 * @param stmt
+	 * @param rs
+	 */
 	private static void readAttendance(Connection conn, Statement stmt, ResultSet rs) {
 		String fileName = "attendenceTable.txt";
-		try (
-				BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
-				// insert prepared statements
-						
-			) {
-	            
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
 			String line;
-
-			while ((line = br.readLine()) != null) {
-				String[] data = line.split("\t");
-				if (data.length != 3) continue;
-				PreparedStatement insertRow_Customer;
-				try {
-					insertRow_Customer = conn.prepareStatement(
-							"insert into Attendance(MovieID, CustomerId, AttendanceDATE)values(?, ?, ?)");
-					// split input line into fields at tab delimiter
-		            insertRow_Customer.setInt(1, convertToId(data[0]));
-		            insertRow_Customer.setInt(2, convertToId(data[1]));
-		            insertRow_Customer.setString(3, data[2]);
-		            insertRow_Customer.execute();
-				} catch (SQLException e) {
-					e.printStackTrace();
-					System.out.println("one insertion fail in Attendance");
-				}
-
-				}
-				
-			} catch (FileNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		
-	}
-	private static void readEndorsement(Connection conn, Statement stmt, ResultSet rs) {
-		String fileName = "endorsementTable.txt";
-		try (
-				BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
-				// insert prepared statements
+			try {
+				while ((line = br.readLine()) != null) {
+					String[] data = line.split("\t");
+					if (data.length != 3) continue;
+					PreparedStatement insertRow_Attendance;
+					try {
+						insertRow_Attendance = conn.prepareStatement(
+								"insert into Attendance(MovieID, CustomerId, AttendanceDATE)values(?, ?, ?)");
 						
-			) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				PreparedStatement insertRow_Endorsement;
-				String[] data = line.split("\t");
-				if (data.length != 3) continue;
-				try {
-					insertRow_Endorsement = conn.prepareStatement(
-							"insert into Endorsement (reviewID, CustomerId, endorsementDATE)values(?, ?, ?)");
-					insertRow_Endorsement.setInt(1, convertToId(data[0]));
-					insertRow_Endorsement.setInt(2, convertToId(data[1]));
-					insertRow_Endorsement.setString(3, data[2]);
-					insertRow_Endorsement.execute();
-				} catch (SQLException e) {
-					System.out.println("one insertion fail in endorsement");
+			            insertRow_Attendance.setInt(1, convertToId(data[0]));
+			            insertRow_Attendance.setInt(2, convertToId(data[1]));
+			            insertRow_Attendance.setString(3, data[2]);
+			            insertRow_Attendance.execute();
+						
+					} catch (SQLException e) {
+						System.out.println("one insertion fail in Attendance");
+					}
 				}
-				
-			}
-				
-			} catch (FileNotFoundException e1) {
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				e.printStackTrace();
 			}
-		
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
+	
+	/**
+	 * Read form the default review file
+	 * @param conn
+	 * @param stmt
+	 * @param rs
+	 */
 	private static void readReview(Connection conn, Statement stmt, ResultSet rs) {
 		String fileName = "reviewTable.txt";
-		try (
-				BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
-				// insert prepared statements
-			) {
-	            
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
 			String line;
-			while ((line = br.readLine()) != null) {
-				// split input line into fields at tab delimiter
-				String[] data = line.split("\t");
-				if (data.length != 6) continue;
-				try {
-					PreparedStatement insertRow_Review = conn.prepareStatement(
-							"insert into Review(MovieId, CustomerId, rating, reviewDate, Review, reviewId)values(?, ?, ?, ?, ?, ?)");		
-					insertRow_Review.setInt(1, convertToId(data[0]));
-					insertRow_Review.setInt(2, convertToId(data[1]));
-					insertRow_Review.setInt(3, convertToId(data[2]));
-					insertRow_Review.setDate(4, convertToDate(data[3]));
-					insertRow_Review.setString(5, data[4]);
-					insertRow_Review.setInt(6, convertToId(data[5]));
-					insertRow_Review.execute();
-				} catch (SQLException e) {
-					System.out.println("One insertion fail in Review Table");
+			try {
+				while ((line = br.readLine()) != null) {
+					String[] data = line.split("\t");
+					if (data.length != 6) continue;
+					PreparedStatement insertRow_Review;
+					try {
+						insertRow_Review = conn.prepareStatement(
+								"insert into Review(MovieId, CustomerId, rating, reviewDate, Review, reviewId)values(?, ?, ?, ?, ?, ?)");		
+						insertRow_Review.setInt(1, convertToId(data[0]));
+						insertRow_Review.setInt(2, convertToId(data[1]));
+						insertRow_Review.setInt(3, convertToId(data[2]));
+						insertRow_Review.setDate(4, convertToDate(data[3]));
+						insertRow_Review.setString(5, data[4]);
+						insertRow_Review.setInt(6, convertToId(data[5]));
+						insertRow_Review.execute();
+						
+					} catch (SQLException e) {
+						System.out.println("one insertion fail in Review");
+					}
 				}
-				// print number of rows in tables
-			}
-				
-			} catch (FileNotFoundException e1) {
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				e.printStackTrace();
 			}
-		
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}	
 	}
+	
+	
+	/**
+	 * Read from the default endorsement file
+	 * @param conn
+	 * @param stmt
+	 * @param rs
+	 */
+	private static void readEndorsement(Connection conn, Statement stmt, ResultSet rs) {
+		String fileName = "endorsementTable.txt";
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(new File(fileName)));
+			String line;
+			try {
+				while ((line = br.readLine()) != null) {
+					String[] data = line.split("\t");
+					if (data.length != 3) continue;
+					PreparedStatement insertRow_Endorsement;
+					try {
+						insertRow_Endorsement = conn.prepareStatement(
+								"insert into Endorsement (reviewID, CustomerId, endorsementDATE)values(?, ?, ?)");
+						insertRow_Endorsement.setInt(1, convertToId(data[0]));
+						insertRow_Endorsement.setInt(2, convertToId(data[1]));
+						insertRow_Endorsement.setString(3, data[2]);
+						insertRow_Endorsement.execute();
+						
+					} catch (SQLException e) {
+						System.out.println("one insertion fail in Endorsement");
+					}
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}	
+	}
+	
 	
 }

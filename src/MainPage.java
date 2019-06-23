@@ -3,6 +3,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Scanner;
 
+/**
+ * This class is the main page for user to operate.
+ * There are 4 options, one is to print all the tables exists in the database, 
+ * two is turning to the customer page, three is turning to employee page, 
+ * and four is existing the operation. 
+ *
+ */
 public class MainPage {
 	
 	public static void main(String args[]) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
@@ -11,8 +18,6 @@ public class MainPage {
 		System.out.println();
 		
 		try {
-//			stmt = conn.createStatement();
-//			CreateTables.create(conn, stmt);
 //			setDefaultData.defaultData(conn, stmt);
 			Scanner readUser = new Scanner(System.in);
 			int option = -1;
@@ -43,10 +48,11 @@ public class MainPage {
 		} catch (SQLException e) {
 			System.out.println("ERROR before main function");
 		}
-
-	
 	}
 	
+	/**
+	 * This is the page shows to choose
+	 */
 	public static void printMainOption() {
 		System.out.print("\n\n"
 				+ "Main Page\n"

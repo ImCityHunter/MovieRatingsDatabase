@@ -1,75 +1,37 @@
-
-
-
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * This program creates a publication database for the ER data model
- * for Assignment 3. There are entity tables for Publisher, Journal, 
- * Article, and Author, and relationship tables for the publishedBy, 
- * publishedIn, and writtenBy relations in the ER model. 
- * 
- * This version uses the relationship name for the single fields in 
- * 1:n relationships between entities, rather than relationship tables.
- * Adding information to the relation will require re-factoring the 
- * database to use a table for the relationship. 
- * 
- * @author philip gust
+ * There class creates all the entity tables for Customer, Movie, Attendance, Review and Endorsement;
+ * creates the stored functions for condition check as 
+ * checkReviewTableDates, checkEndorsementTable, checkReviewOnce; 
+ * and some table constraints for format check as valid_reviewDate, valid_reviewOnce and checkEndorsementTable.
  */
 
 public class CreateTables {
 
-	//All the constraints
-	static String [] triggers = {
-		"CreateAttendance","CreateReview","CreateEndorsement"
-	};
-	static String [] functions = {"checkReviewTableDates","checkEndorsementTable","checkReviewOnce"};
-	static String [] dependentTables = {"Endorsement","Review","Attendance"};
+	//The list of tables and stored functions
+	static String [] functions = {"checkReviewTableDates", "checkReviewOnce", "checkEndorsementTable"};
 	static String [] independentTables= {"Customer", "Movie"};
-//	static String [] functions= {"isISSN","isDoi","isORCID","parseISSN","issnToString","orcidToString","parseOrcid"};
+	static String [] dependentTables = {"Attendance", "Review", "Endorsement"};
+	
 
+	/**
+	 * Clear the database for dropping all functions, constraints and tables.
+	 * And then create all tables and functions.
+	 * @param conn
+	 * @param stmt
+	 */
 	public static void create(Connection conn, Statement stmt) {
-			//clear database
 	        dropFunctions(stmt);
 	        dropConstraints(stmt);
-	        dropTriggers(stmt);
 	        dropTables(stmt, dependentTables);
 			dropTables(stmt, independentTables);
 			store_functions(stmt);
 			createTables(stmt);	
 	}
 	
-	
-	private static void dropConstraints(Statement stmt) {
-		try {
-			stmt.executeUpdate("alter table review drop constraint valid_reviewDate");
-			stmt.executeUpdate("alter table review drop constraint valid_reviewOnce");
-			stmt.executeUpdate("alter table endorsement drop constraint checkEndorsementTable");
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * drop triggers
-	 * @param stmt
-	 */
-	private static void dropTriggers(Statement stmt) {
-		for (String trigger: triggers) {
-			try {
-				stmt.executeUpdate("Drop Trigger "+trigger);
-				
-			}
-			catch(SQLException ex) {
-				//System.out.println("No Trigger Dropped");
-			}
-		}
-
-	}
 	/**
 	 * drop functions
 	 * @param stmt
@@ -77,40 +39,49 @@ public class CreateTables {
 	private static void dropFunctions(Statement stmt) {
 		for (String function: functions) {
 			try {
-				stmt.executeUpdate("Drop Function "+function);
+				stmt.executeUpdate("Drop Function " + function);
 			}
-			catch(SQLException ex) {
-				//System.out.println("No Trigger Dropped");
+			catch(SQLException e) {
 			}
 		}
 
 	}
+	
+	/**
+	 * drop constraints
+	 * @param stmt
+	 */
+	private static void dropConstraints(Statement stmt) {
+		try {
+			stmt.executeUpdate("alter table review drop constraint valid_reviewDate");
+			stmt.executeUpdate("alter table review drop constraint valid_reviewOnce");
+			stmt.executeUpdate("alter table endorsement drop constraint checkEndorsementTable");
+		} catch (SQLException e) {
+		}
+	}
+	
+	
 	/**
 	 * drop tables
 	 * @param stmt
 	 * @param dbTables
 	 */
 	private static void dropTables(Statement stmt, String dbTables[]) {
-    	//with primary & foreign keys, need to reverse deleting orders
-    	
     	for(String table:dbTables) {
             try {
             	stmt.executeUpdate("drop table "+table);
-            } catch (SQLException ex) {
-            	//ex.printStackTrace();
-        		//System.out.println("Did not drop table "+table);
+            } catch (SQLException e) {
             }  	
         }
     }
+	
     /**
      * create tables
      * @param stmt
      */
     private static void createTables(Statement stmt) {
-    	try {
-    		
+    	try {    		
     		//The information is entered by the theater when the customer registers.
-    	    //If a customer is deleted, all of his or her reviews and endorsements are deleted.
            String createTable_Customer =
             		  "create table Customer ("
             		+ "  CustomerID int not null,"
@@ -126,13 +97,11 @@ public class CreateTables {
           		  "create table Movie ("
           		+ "  Title varchar(32) not null,"
           		+ "  MovieID int not null,"
-          		//+ "  MovieID int not null GENERATED ALWAYS AS IDENTITY (START WITH 1000, INCREMENT BY 1),"
           		+ "  primary key (MovieID)"
           		+ ")";
           stmt.executeUpdate(createTable_Movie);
               
           //This info is a record of a movie seen by a customer on a given date.
-          //If a movie is deleted, all of its attendances are deleted. Attendance info is used to verify attendance when creating a review.
           String createTable_Attendance =
           		  "create table Attendance ("
           		+ "  MovieID int not null,"
@@ -145,7 +114,6 @@ public class CreateTables {
           stmt.executeUpdate(createTable_Attendance);
               
           //This is a review of a particular movie attended by a customer within the last week.
-          //There can only be one movie review per customer; If a movie is deleted, all of its reviews are also delete
           String createTable_Review =
           		  "create table Review ("
           		+ "  MovieID int not null,"
@@ -153,9 +121,8 @@ public class CreateTables {
           		+ "  Rating int not null,"
           		+ "  ReviewDate date not null,"
           		+ "  Review varchar(1000) not null,"
-          		//+ "  ReviewID int not null GENERATED ALWAYS AS IDENTITY (START WITH 100, INCREMENT BY 1),"
           		+ "  ReviewId int not null,"
-          		+ "  CONSTRAINT valid_reviewDate check(checkReviewTableDates(CustomerID,MovieID,ReviewDate)),"
+          		+ "  CONSTRAINT valid_reviewDate check(checkReviewTableDates(CustomerID, MovieID, ReviewDate)),"
           		+ "  CONSTRAINT valid_reviewOnce check(checkReviewOnce(MovieID, CustomerID)),"
           		+ "  check(Rating between 0 and 5),"
           		+ "  primary key (ReviewID),"
@@ -165,30 +132,25 @@ public class CreateTables {
           stmt.executeUpdate(createTable_Review);
           
           //This is an endorsement of a movie review by a customer.
-          //and this customerid cannot be the same as the one if the reviewTable
-          //If a review is deleted, all endorsements are also deleted.
           String createTable_Endorsement =
           		  "create table Endorsement ("
         		+ "  ReviewID int,"
           		+ "  CustomerID int,"
         		+ "  EndorsementDate DATE not null,"
-          		+ "  CONSTRAINT valid_endorsement check(checkEndorsementTable(ReviewID,CustomerID,EndorsementDate)),"
+          		+ "  CONSTRAINT valid_endorsement check(checkEndorsementTable(ReviewID, CustomerID, EndorsementDate)),"
           		+ "  primary key (ReviewID , CustomerID),"
         		+ "  foreign key (ReviewID) references Review (ReviewID) on delete cascade,"
           		+ "  foreign key (CustomerID) references Customer (CustomerID) on delete cascade"
           		+ " )";
           stmt.executeUpdate(createTable_Endorsement);
-    	}
-    	catch(SQLException e) {
-    		//if table already existed, re-run dropTables
-    		e.printStackTrace();
+    	}catch(SQLException e){
     	}	
     }
     
 
    
     /**
-     * Create Functions
+     * Create stored functions
      * @param stmt
      */
     private static void store_functions (Statement stmt) {
@@ -203,7 +165,6 @@ public class CreateTables {
     				+ " EXTERNAL NAME "
     				+ "'DBFunctions.checkReviewTableDates'";
     		stmt.executeUpdate(checkReviewTableDates);
-    		//System.out.println("forReviewTable function success");
     		
     		String checkEndorsementTable =
     				"CREATE FUNCTION checkEndorsementTable(rid int, cid int, EndorsementDate date)"
@@ -226,7 +187,6 @@ public class CreateTables {
     		stmt.executeUpdate(checkReviewOnce);
     		
 		} catch (SQLException e) {
-			//e.printStackTrace();
 		}
     }
 }

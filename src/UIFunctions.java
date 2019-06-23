@@ -7,31 +7,40 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.Random;
 
+/**
+ * This class implement functions for UI query 
+ *
+ */
 public class UIFunctions{
 	static String [] dependentTables = {"Endorsement","review","Attendance"};
 	static String [] independentTables= {"Customer", "Movie"};
 	static ResultSet rs = null;
 	
+	/**
+	 * the request is invalid
+	 */
 	private static void printError() {
 		String errorInput = "\n\n\n\nwow....you are trolling us :(  bye! \n\n\n";
 		System.err.println(errorInput);
 	}
 	
-	
+	/**
+	 * print the result about the request
+	 * @param rs
+	 * @param stmt
+	 */
 	public static void printResultSet(ResultSet rs, Statement stmt) {
 		try {
 			ResultSetMetaData rsmd = rs.getMetaData();
 			String eventFormat = "";
 			int numberOfColumns = rsmd.getColumnCount();
-			String [] row = new String [numberOfColumns];
+			Object [] row = new String [numberOfColumns];
 	        
-			for(int i=0;i<numberOfColumns;i++) {
-	        	eventFormat+="%-20s";
+			for(int i = 0; i < numberOfColumns; i++) {
+	        	eventFormat += "%-20s";
 	        }
-			eventFormat+="\n";
+			eventFormat += "\n";
 	        
 		    for (int i = 1; i <= numberOfColumns; i++) {
 		         String columnName = rsmd.getColumnName(i);
@@ -46,12 +55,12 @@ public class UIFunctions{
 		          } 
 		        System.out.format(eventFormat, row);
 		     }
-		     System.out.println();
-		      
 		} catch (SQLException e) {
 			System.out.println("ResultSet Failed to Print");
 		}
 	}
+	
+	
 	/**
 	 * convert date from string to java.util.date to java.sql.date
 	 * @param input
@@ -67,26 +76,43 @@ public class UIFunctions{
 			return null;
 		}
 		java.sql.Date sqlDate = new java.sql.Date(date.getTime());
-		//System.out.println(sqlDate);
 		return sqlDate;
 	}
+	
+	/**
+	 * check if the string is empty
+	 * @param s
+	 * @return
+	 */
 	public static boolean validString(String s) {
-		if(s.isEmpty()||s.isBlank()) {
+		if(s.isEmpty()) {
 			printError();
 		}
 		return true;
 	}
+	
+	/**
+	 * check if the string email is valid
+	 * @param email
+	 * @return
+	 */
 	static boolean validEmail(String email) {
 		   String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
 		   boolean valid = email.matches(regex);
-		   if(email.isBlank()||email.isEmpty()||!valid) {
+		   if(email.isEmpty() || !valid) {
 			   printError();
 		   }
 		   return valid;
 		}
+	
+	/**
+	 * check if the string id is valid
+	 * @param s
+	 * @return
+	 */
 	public static int validId(String s) {
 		
-		if(s.isEmpty()||s.isBlank()) {
+		if(s.isEmpty()) {
 			printError();
 			return -1;
 		}
@@ -97,124 +123,144 @@ public class UIFunctions{
 		catch (NumberFormatException e) {
 			printError();
 	        return -1;
-	    }
-		
-		
+	    }	
 	}
+	
+	/**
+	 * create the database and insert the default file
+	 * @param conn
+	 * @param stmt
+	 */
 	public void createDatabase(Connection conn, Statement stmt){
-		
 		setDefaultData.defaultData(conn, stmt);
 			
 	}
+	
+	/**
+	 * print all the tables
+	 * @param conn
+	 */
 	public static void printAllTable(Connection conn) {
 		try {
 			Statement stmt = conn.createStatement();
 			for (String table: dependentTables) printTable(stmt,table,rs);
 			for (String table: independentTables) printTable(stmt,table,rs);
 			
-		} catch (SQLException e) {
-			
-		}
-		
+		} catch (SQLException e) {			
+		}	
 	}
+	
+	/**
+	 * print one table
+	 * @param stmt
+	 * @param table
+	 */
 	public static void printOneTable(Statement stmt, String table) {
 		printTable(stmt, table, rs);	
 	}
+	
+	/**
+	 * print the result set on the table
+	 * @param stmt
+	 * @param table
+	 * @param rs
+	 */
 	private static void printTable(Statement stmt, String table, ResultSet rs) {
-		try {
-			//print the name of the table for users
 			System.out.println("["+table.toUpperCase()+"]");
 			
-			rs = stmt.executeQuery("SELECT * From "+table);
-			ResultSetMetaData rsmd = rs.getMetaData();
-			String eventFormat = "";
-			int numberOfColumns = rsmd.getColumnCount();
-			String [] row = new String [numberOfColumns];
-	        
-			//find # of columns in the table
-			for(int i=0;i<numberOfColumns;i++) {
-	        	eventFormat+="%-20s";
-	        }
-			eventFormat+="\n";
-	        
-			//store the name of the column into format
-		    for (int i = 1; i <= numberOfColumns; i++) {
-		         String columnName = rsmd.getColumnName(i);
-		         row[i-1] = columnName;
-		    }
-		     System.out.format(eventFormat,row);
-		     while (rs.next()) {
-		        for (int i = 1; i <= numberOfColumns; i++) {
-		        	
-		            String columnValue = rs.getString(i);
-		            row [i-1] = columnValue;
-		          } 
-		        System.out.format(eventFormat, row);
-		     }
-		     System.out.println();
-		      
-		} catch (SQLException e) {
-			
-		}
+			try {
+				rs = stmt.executeQuery("SELECT * From "+table);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+			}
+			printResultSet(rs, stmt);
 	}
 	
-	
-	public static boolean registerCustomer(Connection conn, int id,String name, String email, java.sql.Date date) {
-
-		boolean valid = false;
+	/**
+	 * register a customer
+	 * @param conn
+	 * @param id the customer id 
+	 * @param name the customer name
+	 * @param email the customer email
+	 * @param date the register date
+	 * @return true if register succeeded, otherwise false
+	 */
+	public static boolean registerCustomer(Connection conn, int id, String name, String email, java.sql.Date date) {
 		try {
 			PreparedStatement insertCustomer = conn.prepareStatement("insert into Customer (Customerid, Name, Email, JoinedDate) values (?, ?, ?, ?)");
 			insertCustomer.setInt(1, id);
 			insertCustomer.setString(2, name);
 			insertCustomer.setString(3, email);
 			insertCustomer.setDate(4, date);
-			valid= insertCustomer.execute();
+			insertCustomer.execute();
 		} catch (SQLException e) {
-			System.out.println("...oh...ohh bad input. (possible duplicated id)");
+			System.out.println("...oh...ohh bad input, you cannot register.");
 			return false;
 		}
-		if(valid) System.out.println("new customer is added");
+		System.out.println("new customer is added.");
 		return true;
 	}
 	
+	/**
+	 * add a movie to the table
+	 * @param conn
+	 * @param title the movie title
+	 * @param id the movie id
+	 * @return true if add succeeded, otherwise false
+	 */
 	public static boolean insertMovie(Connection conn, String title, int id) {
 		PreparedStatement insertMovie;
-		boolean valid = false;
 		try {
 			insertMovie = conn.prepareStatement("insert into Movie (Title, MovieId) values (?,?)");
 			insertMovie.setString(1, title);
 			insertMovie.setInt(2, id);
-			valid = insertMovie.execute();
+			insertMovie.execute();
 		} catch (SQLException e) {
-			System.out.println("oh oh...... bad input. (possible: Duplicated id)");
+			System.out.println("oh oh...... bad input, you cannot add the movie.");
 			return false;
 		}
-		if(valid) System.out.println("new movie is added");
-		return true;
-		
+		System.out.println("new movie is added.");
+		return true;		
 	}
 	
+	/**
+	 * add a attendance for a customer to see the movie
+	 * @param conn
+	 * @param mid the movie id
+	 * @param cid the customer id
+	 * @param date the date to see
+	 * @return
+	 */
 	public static boolean insertAttendance(Connection conn, int mid, int cid, java.sql.Date date) {	
 		PreparedStatement insertAttendance;
-		boolean valid = false;
 		try {
 			insertAttendance = conn.prepareStatement("insert into ATTENDANCE (MovieId, CustomerId, ATTENDANCEDate) values (?, ?, ?)");
 			insertAttendance.setInt(1, mid);
 			insertAttendance.setInt(2, cid);
 			insertAttendance.setDate(3, date);		
-			valid = insertAttendance.execute();
+			insertAttendance.execute();
 		} catch (SQLException e) {
-			System.out.println("Sorry, we cannot confirm you watched this movie!");
+			System.out.println("Sorry, we cannot confirm you watched this movie.");
 			return false;
 		}
 		
-		if(valid) System.out.println("You watched a movie! Was it good? Give it a review");
+		System.out.println("You watched a movie! Was it good? Give it a review");
 		return true;
 	}
 	
+	/**
+	 * add a review for a movie
+	 * @param conn
+	 * @param mid the movie id
+	 * @param cid the customer id
+	 * @param date the date to review
+	 * @param rating the rating rank
+	 * @param review the review
+	 * @param id the review id
+	 * @return
+	 */
 	public static boolean insertReview(Connection conn, int mid, int cid, java.sql.Date date, int rating, String review, int id) {
 		PreparedStatement insertReview;
-		
 		try {
 			insertReview = conn.prepareStatement("insert into Review (MovieId, CustomerId, Rating, ReviewDate, Review, ReviewId) values (?, ?, ?, ?, ?,?)");
 			insertReview.setInt(1, mid);
@@ -225,61 +271,51 @@ public class UIFunctions{
 			insertReview.setInt(6, id);
 			insertReview.execute();
 		} catch (SQLException e) {
-			System.out.println("\n\nha ha....oh...oh seems like review is not added");
+			System.out.println("\n\nha ha....oh...oh sorry, you cannot add a review for the movie.");
 			return false;
 		}
-	
+		System.out.println("Thank you for reviewing the movie.");
 		return true;
 		
 	}
 	
+	/**
+	 * add a endorsement for a review
+	 * @param conn
+	 * @param rid the review id
+	 * @param cid the customer to endorse
+	 * @param date the date to endorse
+	 * @return
+	 */
 	public static boolean insertEndorsement(Connection conn, int rid, int cid, java.sql.Date date){
-		
-		boolean valid = false;
+		PreparedStatement insertEndorsement;
 		try {
-			PreparedStatement insertEndorsement = conn.prepareStatement("insert into Endorsement (ReviewId, CustomerId, EndorsementDate) values (?, ?, ?)");
+			insertEndorsement = conn.prepareStatement("insert into Endorsement (ReviewId, CustomerId, EndorsementDate) values (?, ?, ?)");
 			insertEndorsement.setInt(1, rid);
 			insertEndorsement.setInt(2, cid);
 			insertEndorsement.setDate(3, date);	
-			valid = insertEndorsement.execute();
+			insertEndorsement.execute();
 		} catch (SQLException e) {
-			System.out.println("well... your endorsement is not taken. sorry");
+			System.out.println("well... sorry you cannot to endorse for the movie.");
 		}
-		
+		System.out.println("Thank you for endorsing the review.");
 		return true;
 	}
 	
-	public void deleteCustomer(Connection conn, String cid) throws SQLException {
-
-	    PreparedStatement delete =
-	            conn.prepareStatement("delete from Customer where CustomerId = ?");
-	    delete.setString(1, cid);
-	    delete.execute();
-	  }
-	
-	public void deleteMovie(Connection conn, String mid) throws SQLException {
-
-	    PreparedStatement delete =
-	            conn.prepareStatement("delete from Movie where MovieId = ?");
-
-	    delete.setString(1, mid);
-	    delete.execute();
-	  }
-	
 	/**
-	 * Use Query to find all the people that make a review. And they will each receive gift
+	 * Find all the people that make one or more endorse will receive a free concession item
 	 * @param conn
-	 * @param date
+	 * @param date the date
 	 * @return
 	 */
 	public static ResultSet getFreeConcessionLst(Connection conn, java.sql.Date date) {
 		ResultSet rs = null;
 		try {
-			String query2 = "(select count(*) from endorsement where customer.customerid = endorsement.customerid) as num_gifts";
-			String query3 = "select name, email, "+query2+" from customer";
-			System.out.println("query: "+query3);
-			PreparedStatement getLst = conn.prepareStatement(query3);
-			//getLst.setDate(1, date);
+			PreparedStatement getLst =
+							conn.prepareStatement("select Email from Customer where CustomerId in " +
+											"(select End_CustomerId from Endorsement where EndorsementDate = ?)");
+
+			getLst.setDate(1, date);
 			rs = getLst.executeQuery();
 			if(rs==null) {System.out.println("getFreeConcessionLst is null");}
 		} catch (SQLException e) {
@@ -287,10 +323,17 @@ public class UIFunctions{
 		}
 		return rs;
 	}
+	
+	
+	/**
+	 * Find all the writers of the top rated review of a movie written three days earlier
+	 * will receive a free movie ticket.
+	 * @param conn
+	 * @param date
+	 * @return
+	 */
 	public static ResultSet getFreeTicketCustomer(Connection conn, java.sql.Date date) {
 		ResultSet rs = null;
-		int currentMax = 0;
-		String freeCustomerRid = "";
 		LocalDate local = LocalDate.parse(date.toString()).minusDays(3);
 		java.sql.Date checkDate = java.sql.Date.valueOf(local);
 		try {
@@ -322,36 +365,9 @@ public class UIFunctions{
 		return rs;
 		
 	}
-	public static int generateId(Connection conn, String table){
 		
-		ResultSet rs = null;
-		int id = 0;
-		boolean exit = false;
-		while(!exit) {
-			
-			try {
-			id = 1 + (int)(Math.random() * 10000);
-			
-			String query = "select * from "+table+" where "+table+"id = "+id;
-			PreparedStatement findId = conn.prepareStatement(query);
-			//System.out.println(query);
-			rs = findId.executeQuery();
-			if(!rs.next())  exit = true;
-			else {
-				System.out.println(id+" is taking. auto generating id again");
-				}
-			} catch (SQLException e) {
-				exit = true;
-			}
-		}
-
-		
-		
-		return id;
-	}
-	
 	/**
-	 * Join Moive, Review to get name of the movie and Avg Rating
+	 * Get the name of the movie and average rating.
 	 * @param conn
 	 * @return
 	 */
@@ -359,13 +375,40 @@ public class UIFunctions{
 		ResultSet rs = null;
 		try {
 			String query1 = "(select cast(avg(Rating) as DOUBLE) From Review where review.movieid = movie.movieid) as avgRating";
-			String query2 = "select title,"+query1+" from movie";
-			System.out.println("query: "+query2);
+			String query2 = "select title," + query1 + " from movie";
 			PreparedStatement findmovieId = conn.prepareStatement(query2);
 			rs = findmovieId.executeQuery();
 			} catch (SQLException e) {
 			System.out.println("sorry. cannot provide you a list of all movies' ratings");
 		}
 		return rs;
+	}
+	
+	/**
+	 * It will generate new random id for a table
+	 * @param conn
+	 * @param table
+	 * @return
+	 */
+	public static int generateId(Connection conn, String table){
+		ResultSet rs = null;
+		int id = 0;
+		boolean exit = false;
+		while(!exit) {	
+			try {
+			id = 1 + (int)(Math.random() * 10000);
+			
+			String query = "select * from " + table + " where " + table + "id = " + id;
+			PreparedStatement findId = conn.prepareStatement(query);
+			rs = findId.executeQuery();
+			if(!rs.next())  exit = true;
+			else {
+				System.out.println(id + " is taking. auto generating id again");
+				}
+			} catch (SQLException e) {
+				exit = true;
+			}
+		}		
+		return id;
 	}
 }

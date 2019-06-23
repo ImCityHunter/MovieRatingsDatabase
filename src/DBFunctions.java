@@ -1,5 +1,3 @@
-
-
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
@@ -7,13 +5,23 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 
-
+/**
+ * This class is to implement all the stored functions for table constraints
+ *
+ */
 public class DBFunctions {
 	static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	static ResultSet rs= null;
 
+	/**
+	 * Check if the review is allowed.
+	 * @param cid the customer to review
+	 * @param mid the movie for review
+	 * @param reviewDate the date to review
+	 * @return true if the review can be created, otherwise false
+	 */
 	static public boolean checkReviewTableDates (int cid, int mid, java.sql.Date reviewDate) {
-		String query = "select attendanceDate from Attendance where customerid = "+cid+" and movieId = "+ mid+" order by attendancedate desc";
+		String query = "select attendanceDate from Attendance where customerid = " + cid + " and movieId = " + mid + " order by attendancedate desc";
 		boolean valid = false;
 		try {
 			Connection conn = Connect.newConnection();
@@ -21,23 +29,71 @@ public class DBFunctions {
 			rs = stmt.executeQuery(query);
 			if (rs.next()) {
 				java.sql.Date attendanceDate = rs.getDate("attendancedate");
-				valid = validReviewDate(attendanceDate,reviewDate);
+				valid = validReviewDate(attendanceDate, reviewDate);
 			}
 			else {
-				System.err.println("Hello, "+cid+" please watch the movie first");
+				System.err.println("Sorry, you cannot review, please register and watch the movie first.");
 				valid = false;
 			}
 			conn.close();
 			stmt.close();
 			
 		} catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-			System.err.println("Hello, "+cid+"please watch the movie first");
-		}
-		
+		}	
 		return valid;
 	}
-	static public boolean checkEndorsementTable(int rid, int endorser_id, java.sql.Date endorsedate) {
-		
+	
+	/**
+	 * One customer can only review a movie once
+	 * @param mid the movie for review
+	 * @param cid the customer to review
+	 * @return true if the customer is the first time to review, otherwise false
+	 */
+	static public boolean checkReviewOnce(int mid, int cid) {	
+		String query = "select customerID, movieID from Review where movieID = " + mid + " and customerID = " + cid;
+		boolean valid = false;
+		try {
+			Connection conn = Connect.newConnection();
+			Statement stmt = conn.createStatement();
+			rs = stmt.executeQuery(query);
+			if(rs.next()) {
+				System.err.println("Sorry, you can only review once for the same movie.");
+			    valid = false;
+			    }
+			else valid =  true; 
+			stmt.close();
+			conn.close();
+		} catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {		
+		}	
+		return valid;
+	}
+	
+	/**
+	 * check the review date is within the 7 days of the most recent attendance of the movie
+	 * @param lastAttendance the latest date for the attendance of the customer for the movie
+	 * @param reviewDate the date to review
+	 * @return true if the date is valid, otherwise false
+	 */
+	static boolean validReviewDate(Date lastAttendance, Date reviewDate) {
+		long diff = reviewDate.getTime() - lastAttendance.getTime();
+		long diffday = diff / (24 * 60 * 60 * 1000);
+		if(diffday <= 7) {
+			return true;
+		}
+		else {
+			System.err.println("Sorry, you cannot make a review because you watched this movie after 7 days.");
+		}
+		return false;
+	}
+	
+	/**
+	 * Check if the endorsement is allowed.
+	 * @param rid the review to endorse
+	 * @param endorser_id the customer to endorse
+	 * @param endorsedate the date to endorse
+	 * @return
+	 */
+	static public boolean checkEndorsementTable(int rid, int endorser_id, java.sql.Date endorsedate) {		
 		boolean valid = false;
 		try {
 			Connection conn = Connect.newConnection();
@@ -52,23 +108,19 @@ public class DBFunctions {
 				if(!endorsementOpen(revdate, endorsedate)) return false;
 				Statement stmt1 = conn.createStatement();
 				
-				//get the last date endorse made an endorsement of the same moviw
-				query = "select movieid, endorsement.customerid, endorsementDate from Review left join Endorsement on endorsement.customerid = " + endorser_id
-						+ " and movieid = " + mid
-						+ " order by endorsementDate DESC";
+				//get the last date endorse made an endorsement of the same movie
+				query = "select endorsementDate from Review left join Endorsement on endorsement.customerid = " + endorser_id
+						+ " and movieid = " + mid + " order by endorsementDate DESC";
 				ResultSet res1 = stmt1.executeQuery(query);
 				Date lastEndorseDate = null;
 				if(res1.next()) {
 					lastEndorseDate = res1.getDate("endorsementDate");
-					if(endorsementDateRule(lastEndorseDate,endorsedate)) valid = true;
+					if(endorsementDateRule(lastEndorseDate, endorsedate)) valid = true;
 					else {
 						valid=false;
-						System.out.println("movieid: "+mid+" endorserid: "+endorser_id);
-					}
-						
+					}				
 				}
-				else valid = true; // this means that this is first time endorsing a review 
-				
+				else valid = true;			
 			}
 			conn.close();
 			stmt.close();
@@ -77,98 +129,54 @@ public class DBFunctions {
 		}
 		return valid;
 	}
+	
 	/**
-	 * cannot endorse 3 days after review date
-	 * @param reviewDate
-	 * @param endorseDate
+	 * Endorse is closed for reviews of the movie written three days ago.
+	 * @param reviewDate the date review made
+	 * @param endorseDate the date to endorse
 	 * @return
 	 */
 	static boolean endorsementOpen (Date reviewDate, Date endorseDate) {
 		if(reviewDate == null) {System.err.println("no review in this date to check"); return false;}
-		//convert time diff to day
-		long diff = endorseDate.getTime()-reviewDate.getTime();
-		long diffday = diff / (24 * 60 * 60 * 1000);
-		
-		if(diffday>3) {
-			System.err.printf("reviewdate: %s, endorseDate: %s \n", reviewDate ,endorseDate);
-			System.err.println("Sorry. Cannot endorse a review 3 days after that review was made");
+		long diff = endorseDate.getTime() - reviewDate.getTime();
+		long diffday = diff / (24 * 60 * 60 * 1000);	
+		if(diffday > 3) {
+			System.err.println("Sorry, you cannot endorse a review 3 days after that review was made.");
 			return false;
 		}
-		else return true;
-		
+		else return true;		
 	}
-	/**
-	 * check if this customer has reviewed this movie
-	 * @param mid
-	 * @param cid
-	 * @return
-	 */
-	static public boolean checkReviewOnce(int mid, int cid) {
-		
-		String query = "select customerID, movieID from Review where movieID = " + mid + " and customerID = " + cid;
-		boolean valid = false;
-		try {
-			Connection conn = Connect.newConnection();
-			Statement stmt = conn.createStatement();
-			rs = stmt.executeQuery(query);
-			if(rs.next()) {
-				System.err.println("Sorry, we only let you review once");
-			    valid = false;
-			    }
-			else valid =  true; // means first time reviewing;
-			stmt.close();
-			conn.close();
-		} catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-			
-		}
 	
-		return valid;
-	}
 	/**
-	 * check if endorse review on same movie within 1 day
-	 * @param date (today）
+	 * The endorsement of a review for a movie must be at least one day 
+	 * after the customer's endorsement of a review for the same movie
+	 * @param lastEndorseDate last latest endorse date for the same movie from the customer
+	 * @param endorseDate the current endorse date
 	 * @return
 	 */
 	static boolean endorsementDateRule (Date lastEndorseDate, Date endorseDate) {
 		if(lastEndorseDate == null) return true;
-		//convert time diff to day
-		long diff = endorseDate.getTime()-lastEndorseDate.getTime();
-		long diffday = diff / (24 * 60 * 60 * 1000);
-		
-		if(diffday>1) return true;
+		long diff = endorseDate.getTime() - lastEndorseDate.getTime();
+		long diffday = diff / (24 * 60 * 60 * 1000);		
+		if(diffday > 1) return true;
 		else {
-			System.out.println("L: "+lastEndorseDate+" N: "+endorseDate);
-			System.err.println("you cannot endorse reviews on the same movie within 24 hours");
+			System.err.println("Sorry, you cannot endorse reviews on the same movie within 24 hours.");
 		}
 		return false;
 	}
 	
 	/**
-	 * check if two customers are the same
-	 * @param date (today）
+	 * A customer cannot endorse his or her own review.
+	 * @param endorse_cid the customer to endorse
+	 * @param cid the customer to review
 	 * @return
 	 */
 	static boolean endorsesomeone (int endorse_cid, int cid) {
-		if (endorse_cid==cid) {
-			System.err.println(endorse_cid+", you cannot endorse yourself");
+		if (endorse_cid == cid) {
+			System.err.println("Sorry, you cannot endorse yourself.");
 			return false;
 		}
 		return true;
 	}
-	/**
-	 * within 7 days, return true; else return false
-	 * @param date (attendance date)
-	 * @return
-	**/
-	static boolean validReviewDate(Date lastAttendance, Date reviewDate) {
-		long diff = reviewDate.getTime()-lastAttendance.getTime();
-		long diffday = diff / (24 * 60 * 60 * 1000);
-		if(diffday<=7) {
-			return true;
-		}
-		else {
-			System.err.println("sorry you cannot make a review because you watched this movie "+diffday+" days ago");
-		}
-		return false;
-	}
+	
 }
