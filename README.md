@@ -17,6 +17,11 @@ Create a database for Giving movies review, ranking of reviews for customers
 7. dbFunction: all the assist functions that are needed for creating table
 8. uiFunctions: all the asist functions needed for mainpage,customerview, and employeeview
 
+# TextFiles
+- [ customer.txt, review.txt, endorsement.txt, employee.txt, attendance.txt ]
+- These are all the files that provides pseudo data
+- These files are needed to run setdefaultdata.java
+
 # Highlights of the project
 1. when creating tables, tables will call functions that are stored in database
 2. functions are all java functions
