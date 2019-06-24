@@ -28,8 +28,8 @@ Create a database for Giving movies review, ranking of reviews for customers
 3. functions also retrieve data from other tables
 
 # The Design (Entity-Relationship) Diagram 
-![Image description](erdiagram.png)
-All the needed information can be found in the slide
+![Image description](ERDiagram.png)
+- All the needed information can be found in the slide
 https://prezi.com/p/a__4rkcgv4k1/finalproject/
 
 # Tables
