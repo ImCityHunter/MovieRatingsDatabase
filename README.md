@@ -1,11 +1,12 @@
 # Final Project 
-Create a database for Giving movies review, ranking of reviews for customers
+- Create a database for Giving movies review, ranking of reviews for customers
+- Created by HoKang Yu & Annie Lin 
 
 # Procedure / Road Map
 1. include derby.jar in the classpath, build path
 2. run [setdefaultdata.java], this will initial all the tables, functions, constraints, etc
 3. run [mainpage.java]
-4. then you will be given options to choose from what you want to do
+4. then have fun!
 
 # Classes
 1. Connection: create connection to a databasea
@@ -15,7 +16,9 @@ Create a database for Giving movies review, ranking of reviews for customers
 5. Customer view: provide all the options that customer can access
 6. Employee view: provide all the options that employees can access
 7. dbFunction: all the assist functions that are needed for creating table
+  - dbFunctions shall be able to reject and print data that violate table's rule
 8. uiFunctions: all the asist functions needed for mainpage,customerview, and employeeview
+  - UIFunctions should be able to reject bad input (email, options, dates, etc)
 
 # TextFiles
 - [ customer.txt, review.txt, endorsement.txt, employee.txt, attendance.txt ]
@@ -49,3 +52,8 @@ Tables: { Customer, Movie, Attendance, Review, Endorsement }
   1. Check if endorser is endorsing him/herself
   2. Check if endorsement is date is within 3 days of the review
   3. Check if there is 1 day apart after endorsing another review of the same movie
+
+# Triggers
+Originally, we had a table that contains information about customer and if a customer receives any gift; this table has triggers that could auto update information when some data is inserted in other table. However, we found this design would be poor and unnecessary. Instead, when an user wants to see the information of who gets free gift and ticket, we just run a query in UIFunctions.java and print the result of query. In this case, we do not need an extra table or any trigger. Triggers in derby also have limited ability comparing to mysql. So we changed our design to maximize utility.
+
+
