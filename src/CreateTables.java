@@ -25,9 +25,16 @@ public class CreateTables {
 	 */
 	public static void create(Connection conn, Statement stmt) {
         	dropConstraints(stmt);
+        	
+        	// run drop tables twice, in case tables have complicated relations
 	        dropFunctions(stmt);
 	        dropTables(stmt, dependentTables);
 			dropTables(stmt, independentTables);
+			dropFunctions(stmt);
+	        dropTables(stmt, dependentTables);
+			dropTables(stmt, independentTables);
+			
+			// build tables
 			store_functions(stmt);
 			createTables(stmt);	
 	}
