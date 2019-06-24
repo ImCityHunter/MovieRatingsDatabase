@@ -17,14 +17,14 @@ public class MainPage {
 		Statement stmt = conn.createStatement();
 		System.out.println();
 		
-		//			setDefaultData.defaultData(conn, stmt);
+		//setDefaultData.defaultData(conn, stmt);
 		Scanner readUser = new Scanner(System.in);
 		int option = -1;
-		while(option!=5) {
+		while(option!=4) {
 			printMainOption();
 			String read = readUser.nextLine();
 			option = UIFunctions.validId(read);
-			if( option == 4) {
+			if( option == 1) {
 			System.out.println();
 			UIFunctions.printAllTable(conn);
 				}

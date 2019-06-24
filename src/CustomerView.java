@@ -36,7 +36,7 @@ public class CustomerView {
 			else if(option == 3) {
 				if(insertAttendance(conn,readUser, stmt)) {
 					System.out.println("\n\nAttendendance Success\n\n");
-					UIFunctions.printOneTable(stmt, "Attendence");
+					UIFunctions.printOneTable(stmt, "Attendance");
 				}
 			}
 			else if(option == 4) {

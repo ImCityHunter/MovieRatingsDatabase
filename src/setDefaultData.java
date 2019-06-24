@@ -244,7 +244,8 @@ public class setDefaultData {
 						insertRow_Review.execute();
 						
 					} catch (SQLException e) {
-						System.out.println("one insertion fail in Review");
+						e.printStackTrace();
+						//System.out.println("one insertion fail in Review");
 					}
 				}
 			} catch (IOException e) {

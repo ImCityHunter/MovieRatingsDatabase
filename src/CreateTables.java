@@ -52,10 +52,19 @@ public class CreateTables {
 	 * @param stmt
 	 */
 	private static void dropConstraints(Statement stmt) {
+		
+		//drop each constraint separately instead of all in one try
 		try {
 			stmt.executeUpdate("alter table review drop constraint valid_reviewDate");
+			
+		} catch (SQLException e) {
+			}
+		try {
 			stmt.executeUpdate("alter table review drop constraint valid_reviewOnce");
-			stmt.executeUpdate("alter table endorsement drop constraint checkEndorsementTable");
+		} catch (SQLException e) {
+			}
+		try {
+			stmt.executeUpdate("alter table endorsement drop constraint valid_endorsement");
 		} catch (SQLException e) {
 		}
 	}

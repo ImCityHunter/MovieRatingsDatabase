@@ -56,6 +56,7 @@ public class UIFunctions{
 		          } 
 		        System.out.format(eventFormat, row);
 		     }
+		     System.out.println("\n\n");
 		} catch (SQLException e) {
 			System.out.println("ResultSet Failed to Print");
 		}
@@ -312,11 +313,14 @@ public class UIFunctions{
 	public static ResultSet getFreeConcessionLst(Connection conn, java.sql.Date date) {
 		ResultSet rs = null;
 		try {
+			String query = "\nselect Email \nfrom Customer \nwhere CustomerId in " +
+					"(\nselect CustomerId \nfrom Endorsement \nwhere EndorsementDate = ?)";
 			PreparedStatement getLst =
 							conn.prepareStatement("select Email from Customer where CustomerId in " +
-											"(select End_CustomerId from Endorsement where EndorsementDate = ?)");
+											"(select CustomerId from Endorsement where EndorsementDate = ?)");
 
 			getLst.setDate(1, date);
+			System.out.println("Sample Query: "+query);
 			rs = getLst.executeQuery();
 			if(rs==null) {System.out.println("getFreeConcessionLst is null");}
 		} catch (SQLException e) {
@@ -395,8 +399,9 @@ public class UIFunctions{
 	public static ResultSet checkMovieRate(Connection conn){
 		ResultSet rs = null;
 		try {
-			String query1 = "(select cast(avg(Rating) as DOUBLE) From Review where review.movieid = movie.movieid) as avgRating";
-			String query2 = "select title," + query1 + " from movie";
+			String query1 = "(\nselect cast(avg(Rating) as DOUBLE) \nFrom Review \nwhere review.movieid = movie.movieid) as avgRating";
+			String query2 = "\nselect title," + query1 + " \nfrom movie";
+			System.out.println("Query: \n"+query2);
 			PreparedStatement findmovieId = conn.prepareStatement(query2);
 			rs = findmovieId.executeQuery();
 			} catch (SQLException e) {

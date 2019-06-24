@@ -57,7 +57,7 @@ public class DBFunctions {
 			Statement stmt = conn.createStatement();
 			rs = stmt.executeQuery(query);
 			if(rs.next()) {
-				System.err.println("Sorry, you can only review once for the same movie.");
+				System.out.println("Sorry, you can only review once for the same movie.");
 			    valid = false;
 			    }
 			else valid =  true; 
