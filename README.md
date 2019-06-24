@@ -29,7 +29,7 @@ Create a database for Giving movies review, ranking of reviews for customers
 
 # The Design (Entity-Relationship) Diagram 
 ![Image description](ERDiagram.png)
-- All the needed information can be found in the slide
+- Additional information can be found in the slide
 https://prezi.com/p/a__4rkcgv4k1/finalproject/
 
 # Tables
