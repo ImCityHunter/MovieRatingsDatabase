@@ -1,5 +1,6 @@
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
 import java.util.Scanner;
@@ -17,8 +18,9 @@ public class EmployeeView {
 	 * @param conn
 	 * @param stmt
 	 * @param readUser
+	 * @throws SQLException 
 	 */
-	public static void Options (Connection conn, Statement stmt,Scanner readUser) {
+	public static void Options (Connection conn, Statement stmt,Scanner readUser) throws SQLException {
 		int option = 0;
 		while(option != 5) {
 			printOption();
@@ -27,13 +29,13 @@ public class EmployeeView {
 			if(option == 1) {
 				if(insertMovie(conn, stmt, readUser)) System.out.println("Insert Movie Success");
 			}
-			else if(option ==2) {
+			else if(option == 2) {
 				printMovie(stmt);
-			}else if(option ==3) {
-				getFreeConcessionLst(conn,stmt,readUser);
+			}else if(option == 3) {
+				getFreeConcessionLst(conn, stmt, readUser);
 			}
-			else if(option ==4){
-				getFreeTicketList(conn,stmt,readUser);
+			else if(option == 4){
+				getFreeTicketList(conn, stmt, today);
 			}
 			else {
 				option = 5;
@@ -89,20 +91,11 @@ public class EmployeeView {
 	 * @param stmt
 	 * @param readUser
 	 * @return
+	 * @throws SQLException 
 	 */
-	private static boolean getFreeTicketList(Connection conn, Statement stmt, Scanner readUser) {
+	private static void getFreeTicketList(Connection conn, Statement stmt, java.sql.Date today) throws SQLException {
 		System.out.print("\n\n\n\n\n");
-//		System.out.print("\nGive me a Deadline Date: (format: YYYY-MM-DD)\t");
-//		String getDate = readUser.nextLine();
-//		java.sql.Date date = UIFunctions.convertToDate(getDate);
-//		if(date == null) return false;
-		ResultSet rs = UIFunctions.getFreeTicketCustomer(conn, today);
-		if(rs==null) return false;
-		
-		System.out.println("\n\nResult of the endorsement. #1 will get a free ticket");
-		UIFunctions.printResultSet(rs, stmt);
-		return true;
-		
+		UIFunctions.getFreeTicketCustomer(conn, stmt, today);		
 	}
 	
 	/**

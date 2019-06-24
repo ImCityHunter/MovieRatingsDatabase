@@ -11,7 +11,6 @@ public class Connect {
 	static String create = "create=true";
 
 	//the embedded derby database
-	private static final String embedded_driver = "org.apache.derby.jdbc.EmbeddedDriver";
 	private static String embedded = "jdbc:derby:iRateDatabase;" + create;
 	
 	/**
@@ -27,7 +26,6 @@ public class Connect {
         props.put("user", "user1");
         props.put("password", "user1");
 		try {
-			//Class.forName( embedded_driver ); 
 			conn = DriverManager.getConnection(embedded, props);
 			
 		} catch (SQLException e) {

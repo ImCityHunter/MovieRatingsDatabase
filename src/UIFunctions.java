@@ -7,6 +7,7 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 /**
  * This class implement functions for UI query 
@@ -26,7 +27,7 @@ public class UIFunctions{
 	}
 	
 	/**
-	 * print the result about the request/query
+	 * print the result about the request
 	 * @param rs
 	 * @param stmt
 	 */
@@ -55,7 +56,6 @@ public class UIFunctions{
 		          } 
 		        System.out.format(eventFormat, row);
 		     }
-		     System.out.print("\n\n");
 		} catch (SQLException e) {
 			System.out.println("ResultSet Failed to Print");
 		}
@@ -107,7 +107,7 @@ public class UIFunctions{
 		}
 	
 	/**
-	 * check if the string id is valid, convert string to int if valid
+	 * check if the string id is valid
 	 * @param s
 	 * @return
 	 */
@@ -333,38 +333,58 @@ public class UIFunctions{
 	 * @param date
 	 * @return
 	 */
-	public static ResultSet getFreeTicketCustomer(Connection conn, java.sql.Date date) {
+	public static void getFreeTicketCustomer(Connection conn, Statement stmt, java.sql.Date date) throws SQLException{
 		ResultSet rs = null;
+		int currentMax = 0;
+		String freeCustomerRid = "";
 		LocalDate local = LocalDate.parse(date.toString()).minusDays(3);
-		java.sql.Date checkDate = java.sql.Date.valueOf(local);
-		try {
-		
-			String query = "("
-					+ " Select customer.name, customer.customerid, count(endorsement.reviewid) as count \n"
-					+ " From customer \n"
-					+ " left join review on customer.customerid = review.customerid \n"
-					+ " left join endorsement on review.reviewid = endorsement.reviewid \n"
-					+ " group by customer.name, customer.customerid \n"
-					+ " order by count desc )";
-			
-			String query2 = "("
-					+ " Select movie.title, customer.name, count(endorsement.reviewid) as count2 \n"
-					+ " From movie \n"
-					+ " left join review on movie.movieid = review.movieid \n"
-					+ " left join customer on customer.customerid = review.customerid \n"
-					+ " left join endorsement on review.reviewid = endorsement.reviewid \n"
-					+ " group by movie.title, customer.name \n"
-					+ " order by movie.title desc )";
-			
-			System.out.println("query: "+query);
-			PreparedStatement getLst = conn.prepareStatement(query);
-			rs = getLst.executeQuery();
-		} catch (SQLException e) {
-			System.err.println("ooooops. This query has issue. Check Back Later");
+		java.sql.Date checkdate = java.sql.Date.valueOf(local);
+		PreparedStatement findmovieId =
+				conn.prepareStatement("select movieId from Review where ReviewDate = ? group by movieID");
+
+		findmovieId.setDate(1, checkdate);
+		rs = findmovieId.executeQuery();
+		ArrayList<String> reviews = new ArrayList<>();
+		while(rs.next()) {
+			ResultSet rs2 = null;
+			String movieID = rs.getString(1);
+			PreparedStatement findReview =
+					conn.prepareStatement("select reviewID from review where movieID = ? and ReviewDate = ?");
+			findReview.setString(1, movieID);
+			findReview.setDate(2, checkdate);
+			rs2 = findReview.executeQuery();
+			currentMax = 0;
+			freeCustomerRid = "";
+			while(rs2.next()) {
+				ResultSet rs3 = null;
+				String reviewID = rs2.getString(1);
+				PreparedStatement findCount =
+						conn.prepareStatement("select count(*) from endorsement where reviewID = ?");
+				findCount.setString(1, reviewID);
+				rs3 = findCount.executeQuery();
+				if(rs3.next()) {
+					if(currentMax < rs3.getInt(1)) {
+						freeCustomerRid = reviewID;
+						currentMax = rs3.getInt(1);
+					}
+					if(currentMax == rs3.getInt(1)) {
+						
+					}
+				}
+			}
+			if(currentMax != 0) {
+				reviews.add(freeCustomerRid);
+			}
 		}
+		PreparedStatement findcid;
+		for (String i : reviews) {
+			findcid = conn.prepareStatement("select CustomerId from Review where ReviewId = ?");
+
+			findcid.setString(1, i);
+			rs = findcid.executeQuery();
+			printResultSet(rs, stmt);
 		
-		return rs;
-		
+		}		
 	}
 		
 	/**
@@ -404,7 +424,7 @@ public class UIFunctions{
 			rs = findId.executeQuery();
 			if(!rs.next())  exit = true;
 			else {
-				System.out.println(id + " is taken. auto generating id again");
+				System.out.println(id + " is taking. auto generating id again");
 				}
 			} catch (SQLException e) {
 				exit = true;
