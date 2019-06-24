@@ -20,7 +20,7 @@ public class EmployeeView {
 	 */
 	public static void Options (Connection conn, Statement stmt,Scanner readUser) {
 		int option = 0;
-		while(option != 4) {
+		while(option != 5) {
 			printOption();
 			String read = readUser.nextLine();
 			option = UIFunctions.validId(read);
@@ -52,6 +52,7 @@ public class EmployeeView {
 				+ "2. Print movie table \n"
 				+ "3. Print the list of concession winners  \n"
 				+ "4. Print the list of free ticket winners \n"
+				+ "5. Main Page \n"
 				+ "Option: ");
 	}
 	

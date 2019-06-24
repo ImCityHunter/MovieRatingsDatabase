@@ -55,6 +55,7 @@ public class UIFunctions{
 		          } 
 		        System.out.format(eventFormat, row);
 		     }
+		     System.out.print("\n\n");
 		} catch (SQLException e) {
 			System.out.println("ResultSet Failed to Print");
 		}
@@ -403,7 +404,7 @@ public class UIFunctions{
 			rs = findId.executeQuery();
 			if(!rs.next())  exit = true;
 			else {
-				System.out.println(id + " is taking. auto generating id again");
+				System.out.println(id + " is taken. auto generating id again");
 				}
 			} catch (SQLException e) {
 				exit = true;

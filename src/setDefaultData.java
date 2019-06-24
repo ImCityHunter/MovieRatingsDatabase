@@ -22,7 +22,18 @@ public class setDefaultData {
 	static String [] dependentTables = {"Endorsement","review","Attendance",};
 	static String [] independentTables= {"Customer", "Movie"};
 	static ResultSet rs = null;
+	
+	public static void main(String args[]) throws InstantiationException, IllegalAccessException, ClassNotFoundException, SQLException {
 		
+		Connection conn = Connect.newConnection();
+		Statement stmt = conn.createStatement();
+		CreateTables.create(conn, stmt);
+		defaultData(conn, stmt);
+		UIFunctions.printAllTable(conn);
+		
+		stmt.close();
+		conn.close();
+	}
 	/**
 	 * Insert data from default file
 	 * @param conn
@@ -36,7 +47,6 @@ public class setDefaultData {
 	        for (String tbl : dependentTables) {
 	            try {
 	            	stmt.executeUpdate("delete from " + tbl);
-	            	
 	            } catch (SQLException ex) {
 	            	System.out.println("Did not truncate table " + tbl);
 	            }

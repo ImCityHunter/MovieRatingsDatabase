@@ -27,7 +27,7 @@ public class Connect {
         props.put("user", "user1");
         props.put("password", "user1");
 		try {
-			Class.forName( embedded_driver ); 
+			//Class.forName( embedded_driver ); 
 			conn = DriverManager.getConnection(embedded, props);
 			
 		} catch (SQLException e) {

@@ -12,42 +12,36 @@ import java.util.Scanner;
  */
 public class MainPage {
 	
-	public static void main(String args[]) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+	public static void main(String args[]) throws InstantiationException, IllegalAccessException, ClassNotFoundException, SQLException {
 		Connection conn = Connect.newConnection();
-		Statement stmt = null;
+		Statement stmt = conn.createStatement();
 		System.out.println();
 		
-		try {
-//			setDefaultData.defaultData(conn, stmt);
-			Scanner readUser = new Scanner(System.in);
-			int option = -1;
-			while(option!=4) {
-				printMainOption();
-				String read = readUser.nextLine();
-				option = UIFunctions.validId(read);
-				if( option == 1) {
-					System.out.println();
-					UIFunctions.printAllTable(conn);
+		//			setDefaultData.defaultData(conn, stmt);
+		Scanner readUser = new Scanner(System.in);
+		int option = -1;
+		while(option!=5) {
+			printMainOption();
+			String read = readUser.nextLine();
+			option = UIFunctions.validId(read);
+			if( option == 4) {
+			System.out.println();
+			UIFunctions.printAllTable(conn);
 				}
-				else if( option == 2) {
-					CustomerView.Options(conn, stmt, readUser);
+			else if( option == 2) {
+				CustomerView.Options(conn, stmt, readUser);
 				}
-				else if( option == 3) {
-					EmployeeView.Options(conn, stmt, readUser);					
+			else if( option == 3) {
+				EmployeeView.Options(conn, stmt, readUser);					
 				}
-				else if( option == 4) {
-					System.out.print("\nBye Bye\n");
+			else if( option == 4) {
+				System.out.print("\nBye Bye\n");
 				}
-				else {
-					System.err.print("\n!!!!!!INVALID INPUT!!!!! See Yah \n");
-					option = 4;
+			else {
+				System.err.print("\n!!!!!!INVALID INPUT!!!!! See Yah \n");
+				option = 4;
 				}
 			}
-			conn.close();
-			
-		} catch (SQLException e) {
-			System.out.println("ERROR before main function");
-		}
 	}
 	
 	/**

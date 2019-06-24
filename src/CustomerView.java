@@ -29,25 +29,26 @@ public class CustomerView {
 			}
 			else if(option == 2) {
 				if(insertCustomer(conn, readUser)) {
+					System.out.println("\n\nRegister Success\n\n");
 					UIFunctions.printOneTable(stmt, "Customer");
-					System.out.println("Register Success");}
+					}
 			}
 			else if(option == 3) {
 				if(insertAttendance(conn,readUser, stmt)) {
+					System.out.println("\n\nAttendendance Success\n\n");
 					UIFunctions.printOneTable(stmt, "Attendence");
-					System.out.println("Attendendance Success");
 				}
 			}
 			else if(option == 4) {
 				if(insertReview(conn, stmt, readUser)) {
 					UIFunctions.printOneTable(stmt, "Review");
-					System.out.println("Review Inserted");				
+					System.out.println("\n\nReview Inserted");				
 					}
 			}
 			else if(option == 5) {
 				if(insertEndorse(conn, readUser, stmt)) {
-					UIFunctions.printOneTable(stmt, "Endorsement");
-					System.out.println("Endorse Success");			
+					System.out.println("\n\nEndorse Success\n\n");
+					UIFunctions.printOneTable(stmt, "Endorsement");			
 					}
 			}else if(option == 6) {
 				printMovieRating(conn,stmt);

@@ -12,7 +12,7 @@ import java.sql.Statement;
 public class CreateTables {
 
 	//The list of tables and stored functions
-	static String [] functions = {"checkReviewTableDates", "checkReviewOnce", "checkEndorsementTable"};
+	static String [] functions = {"CHECKREVIEWTABLEDATES", "checkReviewOnce", "checkEndorsementTable"};
 	static String [] independentTables= {"Customer", "Movie"};
 	static String [] dependentTables = {"Attendance", "Review", "Endorsement"};
 	
@@ -24,8 +24,8 @@ public class CreateTables {
 	 * @param stmt
 	 */
 	public static void create(Connection conn, Statement stmt) {
+        	dropConstraints(stmt);
 	        dropFunctions(stmt);
-	        dropConstraints(stmt);
 	        dropTables(stmt, dependentTables);
 			dropTables(stmt, independentTables);
 			store_functions(stmt);
@@ -145,6 +145,7 @@ public class CreateTables {
           stmt.executeUpdate(createTable_Endorsement);
     	}catch(SQLException e){
     	}	
+    	System.out.println("All Tables Created");
     }
     
 
@@ -186,7 +187,10 @@ public class CreateTables {
     				+ "'DBFunctions.checkReviewOnce'";
     		stmt.executeUpdate(checkReviewOnce);
     		
+    		System.out.println("All Functions Created");
+    		
 		} catch (SQLException e) {
+			e.printStackTrace();
 		}
     }
 }
