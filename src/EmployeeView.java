@@ -50,8 +50,8 @@ public class EmployeeView {
 				+ "Employee View: \n"
 				+ "1. Insert movie \n"
 				+ "2. Print movie table \n"
-				+ "3. Print moving ratings \n"
-				+ "4. Back to main \n"
+				+ "3. Print the list of concession winners  \n"
+				+ "4. Print the list of free ticket winners \n"
 				+ "Option: ");
 	}
 	

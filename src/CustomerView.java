@@ -67,9 +67,8 @@ public class CustomerView {
 				+ "3. Enter a movie you watched \n"
 				+ "4. Insert Review \n"
 				+ "5. Endorse a Review \n"
-				+ "6. Get Free Concession List\n"
-				+ "7. Get Free Ticket List \n"
-				+ "8. Main Page\n"
+				+ "6. Print AVG Movie Ratings\n"
+				+ "7. Main Page\n"
 				+ "Option: ");
 	}
 	

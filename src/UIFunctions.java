@@ -26,7 +26,7 @@ public class UIFunctions{
 	}
 	
 	/**
-	 * print the result about the request
+	 * print the result about the request/query
 	 * @param rs
 	 * @param stmt
 	 */
@@ -106,7 +106,7 @@ public class UIFunctions{
 		}
 	
 	/**
-	 * check if the string id is valid
+	 * check if the string id is valid, convert string to int if valid
 	 * @param s
 	 * @return
 	 */
