@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Thu Jul 04 23:39:57 CST 2019:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-016b-bda4-699e-00000f707f08 
+on database directory /Users/hky/Desktop/CS5200/MovieRatingsDatabase/iRateDatabase with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@799f7e29 
+Loaded from file:/Users/hky/Desktop/CS5200/iRate/db-derby-10.14.2.0-bin/lib/derby.jar
+java.vendor=Oracle Corporation
+java.runtime.version=11.0.2+9-LTS
+user.dir=/Users/hky/Desktop/CS5200/MovieRatingsDatabase
+os.name=Mac OS X
+os.arch=x86_64
+os.version=10.14.5
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

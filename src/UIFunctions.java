@@ -23,7 +23,7 @@ public class UIFunctions{
 	 */
 	private static void printError() {
 		String errorInput = "\n\n\n\nwow....you are trolling us :(  bye! \n\n\n";
-		System.err.println(errorInput);
+		System.out.println(errorInput);
 	}
 	
 	/**
@@ -299,6 +299,7 @@ public class UIFunctions{
 			insertEndorsement.execute();
 		} catch (SQLException e) {
 			System.out.println("well... sorry you cannot to endorse for the movie.");
+			return false;
 		}
 		System.out.println("Thank you for endorsing the review.");
 		return true;

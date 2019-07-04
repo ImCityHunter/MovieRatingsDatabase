@@ -35,7 +35,7 @@ public class EmployeeView {
 				getFreeConcessionLst(conn, stmt, readUser);
 			}
 			else if(option == 4){
-				getFreeTicketList(conn, stmt, today);
+				getFreeTicketList(conn, stmt, readUser);
 			}
 			else {
 				option = 5;
@@ -93,9 +93,9 @@ public class EmployeeView {
 	 * @return
 	 * @throws SQLException 
 	 */
-	private static void getFreeTicketList(Connection conn, Statement stmt, java.sql.Date today) throws SQLException {
-		System.out.print("\n\n\n\n\n");
-		UIFunctions.getFreeTicketCustomer(conn, stmt, today);		
+	private static void getFreeTicketList(Connection conn, Statement stmt, Scanner readUser) throws SQLException {
+		System.out.print("\n\n\n\n\n");;
+		UIFunctions.getFreeTicketCustomer(conn, stmt, today);	
 	}
 	
 	/**

@@ -6,7 +6,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/db-derby-10.14.2.0-bin/lib/derbyclient.jar"/>
-	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/db-derby-10.14.2.0-bin/lib/derby.jar"/>
+	<classpathentry kind="lib" path="/Users/hky/Desktop/CS5200/iRate/db-derby-10.14.2.0-bin/lib/derby.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
