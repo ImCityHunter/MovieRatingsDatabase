@@ -118,7 +118,6 @@ public class CustomerView {
 		
 		boolean valid = UIFunctions.insertAttendance(conn, mid, cid, date);
 		
-		if(valid) UIFunctions.printOneTable(stmt, "Attendance");
 		
 		return valid;
 	}

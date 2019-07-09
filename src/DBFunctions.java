@@ -1,5 +1,6 @@
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -12,7 +13,16 @@ import java.text.SimpleDateFormat;
 public class DBFunctions {
 	static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	static ResultSet rs= null;
-
+	
+	static public boolean checkValidEmail(String email) {
+		   String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+		   boolean valid = email.matches(regex);
+		   if(email.isEmpty() || !valid) {
+			   System.err.println(email+ " is an Invalid Email Format");
+		   }
+		   return valid;
+		
+	}
 	/**
 	 * Check if the review is allowed.
 	 * @param cid the customer to review
@@ -25,6 +35,7 @@ public class DBFunctions {
 		boolean valid = false;
 		try {
 			Connection conn = Connect.newConnection();
+			//PreparedStatement stmt = conn.prepareStatement(query);
 			Statement stmt = conn.createStatement();
 			rs = stmt.executeQuery(query);
 			if (rs.next()) {
@@ -57,7 +68,7 @@ public class DBFunctions {
 			Statement stmt = conn.createStatement();
 			rs = stmt.executeQuery(query);
 			if(rs.next()) {
-				System.out.println("Sorry, you can only review once for the same movie.");
+				System.err.println("Sorry, you can only review once for the same movie.");
 			    valid = false;
 			    }
 			else valid =  true; 
@@ -82,8 +93,8 @@ public class DBFunctions {
 		}
 		else {
 			System.err.println("Sorry, you cannot make a review because you watched this movie after 7 days.");
+			return false;
 		}
-		return false;
 	}
 	
 	/**
@@ -94,7 +105,7 @@ public class DBFunctions {
 	 * @return
 	 */
 	static public boolean checkEndorsementTable(int rid, int endorser_id, java.sql.Date endorsedate) {		
-		boolean valid = false;
+		boolean valid = true;
 		try {
 			Connection conn = Connect.newConnection();
 			Statement stmt = conn.createStatement();
@@ -107,25 +118,26 @@ public class DBFunctions {
 				if(!endorsesomeone(endorser_id,cid1)) return false;
 				if(!endorsementOpen(revdate, endorsedate)) return false;
 				Statement stmt1 = conn.createStatement();
+				query = "select review.reviewid from review where review.movieid = "+mid;
 				
-				//get the last date endorse made an endorsement of the same movie
-				query = "select endorsementDate from Review left join Endorsement on endorsement.customerid = " + endorser_id
-						+ " and movieid = " + mid + " order by endorsementDate DESC";
+				//get all reviews of the THAT movie
 				ResultSet res1 = stmt1.executeQuery(query);
-				Date lastEndorseDate = null;
-				if(res1.next()) {
-					lastEndorseDate = res1.getDate("endorsementDate");
-					if(endorsementDateRule(lastEndorseDate, endorsedate)) valid = true;
-					else {
-						valid=false;
-					}				
-				}
-				else valid = true;			
+				while(res1.next()) {
+					//get all endorsement from this endorser if match any of given reviewid
+					int other_rid = res1.getInt("ReviewId");
+					query = "select endorsementdate from endorsement where reviewid = "+other_rid+" and customerid = "+endorser_id;
+					ResultSet res2 = stmt1.executeQuery(query);
+					if(res2.next()) {
+						java.sql.Date lastEndorseDate = res2.getDate("endorsementDate");
+						if(!endorsementDateRule(lastEndorseDate, endorsedate)) valid = false;
+					}
+					
+				}			
 			}
 			conn.close();
 			stmt.close();
 		} catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-			e.printStackTrace();
+			
 		}
 		return valid;
 	}
@@ -158,7 +170,7 @@ public class DBFunctions {
 		if(lastEndorseDate == null) return true;
 		long diff = endorseDate.getTime() - lastEndorseDate.getTime();
 		long diffday = diff / (24 * 60 * 60 * 1000);		
-		if(diffday > 1) return true;
+		if(diffday >= 1 || diffday < 0 ) return true;
 		else {
 			System.err.println("Sorry, you cannot endorse reviews on the same movie within 24 hours.");
 		}

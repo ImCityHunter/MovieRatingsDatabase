@@ -314,16 +314,13 @@ public class UIFunctions{
 	public static ResultSet getFreeConcessionLst(Connection conn, java.sql.Date date) {
 		ResultSet rs = null;
 		try {
-			String query = "\nselect Email \nfrom Customer \nwhere CustomerId in " +
-					"(\nselect CustomerId \nfrom Endorsement \nwhere EndorsementDate = ?)";
+			String query = "select name, email from customer where customerid in (select customerid from endorsement where endorsementdate = ?)";
 			PreparedStatement getLst =
-							conn.prepareStatement("select Email from Customer where CustomerId in " +
-											"(select CustomerId from Endorsement where EndorsementDate = ?)");
-
+							conn.prepareStatement(query);
 			getLst.setDate(1, date);
-			System.out.println("Sample Query: "+query);
 			rs = getLst.executeQuery();
-			if(rs==null) {System.out.println("getFreeConcessionLst is null");}
+			
+			if(rs.getFetchSize()==0) {System.out.println("getFreeConcessionLst is null");}
 		} catch (SQLException e) {
 			System.err.println("\noooops. I cannot provide you a Free ConcessionList. Check Back Later \n");
 		}
@@ -338,58 +335,67 @@ public class UIFunctions{
 	 * @param date
 	 * @return
 	 */
-	public static void getFreeTicketCustomer(Connection conn, Statement stmt, java.sql.Date date) throws SQLException{
+	public static void getFreeTicketCustomer(Connection conn, Statement stmt, java.sql.Date date){
 		ResultSet rs = null;
 		int currentMax = 0;
 		String freeCustomerRid = "";
 		LocalDate local = LocalDate.parse(date.toString()).minusDays(3);
 		java.sql.Date checkdate = java.sql.Date.valueOf(local);
-		PreparedStatement findmovieId =
-				conn.prepareStatement("select movieId from Review where ReviewDate = ? group by movieID");
-
-		findmovieId.setDate(1, checkdate);
-		rs = findmovieId.executeQuery();
-		ArrayList<String> reviews = new ArrayList<>();
-		while(rs.next()) {
-			ResultSet rs2 = null;
-			String movieID = rs.getString(1);
-			PreparedStatement findReview =
-					conn.prepareStatement("select reviewID from review where movieID = ? and ReviewDate = ?");
-			findReview.setString(1, movieID);
-			findReview.setDate(2, checkdate);
-			rs2 = findReview.executeQuery();
-			currentMax = 0;
-			freeCustomerRid = "";
-			while(rs2.next()) {
-				ResultSet rs3 = null;
-				String reviewID = rs2.getString(1);
-				PreparedStatement findCount =
-						conn.prepareStatement("select count(*) from endorsement where reviewID = ?");
-				findCount.setString(1, reviewID);
-				rs3 = findCount.executeQuery();
-				if(rs3.next()) {
-					if(currentMax < rs3.getInt(1)) {
-						freeCustomerRid = reviewID;
-						currentMax = rs3.getInt(1);
-					}
-					if(currentMax == rs3.getInt(1)) {
-						
+		
+		try {
+			PreparedStatement findmovieId = conn.prepareStatement("select movieId from Review where ReviewDate <= ? group by movieID");
+			findmovieId.setDate(1, checkdate);
+			rs = findmovieId.executeQuery();
+			ArrayList<String> reviews = new ArrayList<>();
+			while(rs.next()) {
+				ResultSet rs2 = null;
+				String movieID = rs.getString(1);
+				PreparedStatement findReview =
+						conn.prepareStatement("select reviewID from review where movieID = ? and ReviewDate <= ?");
+				findReview.setString(1, movieID);
+				findReview.setDate(2, checkdate);
+				rs2 = findReview.executeQuery();
+				currentMax = 0;
+				freeCustomerRid = "";
+				while(rs2.next()) {
+					
+					ResultSet rs3 = null;
+					String reviewID = rs2.getString(1);
+					PreparedStatement findCount =
+							conn.prepareStatement("select count(*) from endorsement where reviewID = ?");
+					findCount.setString(1, reviewID);
+					rs3 = findCount.executeQuery();
+					if(rs3.next()) {
+						if(currentMax < rs3.getInt(1)) {
+							freeCustomerRid = reviewID;
+							currentMax = rs3.getInt(1);
+						}
+						if(currentMax == rs3.getInt(1)) {
+							
+						}
 					}
 				}
+				if(currentMax != 0) {
+					reviews.add(freeCustomerRid);
+				}
 			}
-			if(currentMax != 0) {
-				reviews.add(freeCustomerRid);
+			PreparedStatement findcid;
+			if(reviews.size()==0) {
+				System.out.println("None");
 			}
-		}
-		PreparedStatement findcid;
-		for (String i : reviews) {
-			findcid = conn.prepareStatement("select CustomerId from Review where ReviewId = ?");
+			for (String i : reviews) {
+				findcid = conn.prepareStatement("select CustomerId, MovieId from Review where ReviewId = ?");
 
-			findcid.setString(1, i);
-			rs = findcid.executeQuery();
-			printResultSet(rs, stmt);
-		
-		}		
+				findcid.setString(1, i);
+				rs = findcid.executeQuery();
+				printResultSet(rs, stmt);
+			
+			}		
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+;		
 	}
 		
 	/**

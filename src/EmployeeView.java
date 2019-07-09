@@ -11,8 +11,8 @@ import java.util.Scanner;
  */
 public class EmployeeView {
 	static Date now = new Date();
-	static java.sql.Date today = new java.sql.Date(now.getTime());
-	
+	//static java.sql.Date today = new java.sql.Date(now.getTime());
+	static java.sql.Date today = UIFunctions.convertToDate("2019-06-23"); //testing purpose
 	/**
 	 * List five choices for employee 
 	 * @param conn
@@ -93,9 +93,16 @@ public class EmployeeView {
 	 * @return
 	 * @throws SQLException 
 	 */
-	private static void getFreeTicketList(Connection conn, Statement stmt, Scanner readUser) throws SQLException {
-		System.out.print("\n\n\n\n\n");;
-		UIFunctions.getFreeTicketCustomer(conn, stmt, today);	
+	private static boolean getFreeTicketList(Connection conn, Statement stmt, Scanner readUser) throws SQLException {
+		System.out.print("\n\n\n\n\n");
+		System.out.print("Enter date (yyyy-mm-dd): ");
+		String sdate = readUser.nextLine();
+		java.sql.Date date = UIFunctions.convertToDate(sdate);
+		if(date == null) return false;
+		System.out.println("\nFree ticket list on "+date);
+		UIFunctions.getFreeTicketCustomer(conn, stmt, date);
+		
+		return true;
 	}
 	
 	/**
@@ -107,11 +114,14 @@ public class EmployeeView {
 	 */
 	private static boolean getFreeConcessionLst(Connection conn, Statement stmt, Scanner readUser) {
 		System.out.print("\n\n\n\n\n\n\n");
-		
-		ResultSet rs = UIFunctions.getFreeConcessionLst(conn, today);
+		System.out.print("Enter date (yyyy-mm-dd): ");
+		String sdate = readUser.nextLine();
+		java.sql.Date date = UIFunctions.convertToDate(sdate);
+		if(date == null) return false;
+		System.out.println("\nFree ticket list on "+date);
+		ResultSet rs = UIFunctions.getFreeConcessionLst(conn, date);
 		if(rs == null) return false;
-		
-		System.out.println("\nEmails of who get Free Gifts");
+		System.out.println("\nEmails of who get Free Gifts on date: "+date);
 		UIFunctions.printResultSet(rs, stmt);		
 		return true;
 	}

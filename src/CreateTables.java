@@ -12,7 +12,7 @@ import java.sql.Statement;
 public class CreateTables {
 
 	//The list of tables and stored functions
-	static String [] functions = {"CHECKREVIEWTABLEDATES", "checkReviewOnce", "checkEndorsementTable"};
+	static String [] functions = {"checkValidEmail","CHECKREVIEWTABLEDATES", "checkReviewOnce", "checkEndorsementTable"};
 	static String [] independentTables= {"Customer", "Movie"};
 	static String [] dependentTables = {"Attendance", "Review", "Endorsement"};
 	
@@ -62,6 +62,11 @@ public class CreateTables {
 		
 		//drop each constraint separately instead of all in one try
 		try {
+			stmt.executeUpdate("alter table Customer drop constraint valid_email");
+			
+		} catch (SQLException e) {
+			}
+		try {
 			stmt.executeUpdate("alter table review drop constraint valid_reviewDate");
 			
 		} catch (SQLException e) {
@@ -104,6 +109,7 @@ public class CreateTables {
             		+ "  Name varchar(32) not null,"
             		+ "  Email varchar(64) not null,"
             		+ "  JoinedDate date not null,"
+            		+ "  CONSTRAINT valid_email check(checkValidEmail(Email)),"
             		+ "  primary key (CustomerID)"
             		+ ")";
             stmt.executeUpdate(createTable_Customer);
@@ -173,6 +179,16 @@ public class CreateTables {
     private static void store_functions (Statement stmt) {
 
     	try {
+    		String checkValidEmail = 
+    				"CREATE FUNCTION checkValidEmail(email varchar(64))"
+    				+ " RETURNS BOOLEAN "
+    				+ " PARAMETER STYLE JAVA "
+    				+ " LANGUAGE JAVA "
+    				+ " NO SQL "
+    				+ " EXTERNAL NAME "
+    				+ "'DBFunctions.checkValidEmail'";
+    		stmt.executeUpdate(checkValidEmail);
+    		
     		String checkReviewTableDates =
     				"CREATE FUNCTION checkReviewTableDates(cid int, mid int, reviewDate date)"
     				+ " RETURNS BOOLEAN "
