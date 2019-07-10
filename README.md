@@ -8,6 +8,7 @@
     -   At this point, all the default data should be printed!
     -   this java file will run [createtable.java], then run [setdefaultdata.java]
     -   then it will test all error inputs for the tables
+    -   pictures of results shall be the same as the one in [testResults.pdf]
 3. run [mainpage.java]
 4. then have fun!
     -   If follow the instructions in eclipse console, everything should work fine.
